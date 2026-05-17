@@ -1,3 +1,8 @@
+@keyframes slideUp {
+  from { transform: translateX(-50%) translateY(100%); }
+  to   { transform: translateX(-50%) translateY(0); }
+}
+
 .sheet {
   position: fixed;
   bottom: 0;
@@ -11,7 +16,7 @@
   border-top: 1px solid var(--color-border);
   padding-bottom: env(safe-area-inset-bottom, 16px);
   z-index: 101;
-  animation: slideUp 250ms ease;
+  animation: slideUp 250ms cubic-bezier(0.2, 0, 0, 1);
   display: flex;
   flex-direction: column;
 }
@@ -21,7 +26,7 @@
   height: 4px;
   background: var(--color-border);
   border-radius: var(--radius-full);
-  margin: var(--space-sm) auto var(--space-sm);
+  margin: 10px auto 8px;
   flex-shrink: 0;
 }
 
@@ -29,59 +34,74 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-md) var(--space-sm);
+  padding: 4px var(--space-md) var(--space-sm);
   flex-shrink: 0;
 }
 
+/* Title matches the app's other sheet/panel headings */
 .title {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-lg);
+  font-weight: 590;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
 
+/* Done: same tap size as other icon buttons, right-aligned */
 .close {
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
   min-height: 44px;
   padding: 0 var(--space-sm);
+  transition: color var(--transition-fast);
+}
+
+.close:active {
+  color: var(--color-text-primary);
 }
 
 .content {
   overflow-y: auto;
   flex: 1;
-  padding: 0 var(--space-md) var(--space-md);
+  padding: var(--space-xs) var(--space-md) var(--space-lg);
 }
 
 .section {
   margin-bottom: var(--space-lg);
 }
 
+/* Matches CategorySection header style exactly */
 .sectionLabel {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: 650;
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-sm);
+  letter-spacing: 0.01em;
+  margin-bottom: var(--space-xs);
   padding-bottom: var(--space-xs);
   border-bottom: 1px solid var(--color-border);
 }
 
 .item {
   display: flex;
-  gap: var(--space-sm);
-  min-height: 40px;
-  align-items: flex-start;
-  padding: var(--space-xs) 0;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 36px;
+  padding: 6px 0;
 }
 
+/* Category label — same size as section meta text, not 11px */
 .cat {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-placeholder);
-  min-width: 80px;
-  padding-top: 2px;
+  white-space: nowrap;
   flex-shrink: 0;
+  padding-top: 1px;
 }
 
+/* Task text — matches TaskItem body text exactly */
 .text {
   font-size: var(--font-size-md);
+  line-height: 1.45;
   color: var(--color-text-primary);
   flex: 1;
 }
@@ -89,5 +109,5 @@
 .empty {
   font-size: var(--font-size-sm);
   color: var(--color-text-placeholder);
-  padding: var(--space-xs) 0;
+  padding: 4px 0;
 }
