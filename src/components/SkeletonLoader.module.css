@@ -1,0 +1,87 @@
+@keyframes skPulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.75; }
+}
+
+.wrap {
+  padding-bottom: var(--space-xl);
+}
+
+/* Matches CategorySection layout */
+.section {
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  min-height: 28px;
+}
+
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin-bottom: var(--space-xs);
+}
+
+/* Matches TaskItem row */
+.row {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.checkWrap {
+  min-width: 26px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+  flex-shrink: 0;
+}
+
+.sq {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--color-border);
+  animation: skPulse 1.6s ease-in-out infinite;
+}
+
+.textArea {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 11px 0;
+}
+
+/* Pretext: █ characters styled as placeholder bars.
+   letter-spacing tightens the gaps so they read as solid blocks. */
+.blk {
+  color: var(--color-border);
+  letter-spacing: -0.06em;
+  line-height: 1;
+  animation: skPulse 1.6s ease-in-out infinite;
+  user-select: none;
+  pointer-events: none;
+}
+
+.catBlk {
+  font-size: var(--font-size-sm);
+  font-weight: 650;
+}
+
+/* Badge stays as a pill — block chars look wrong for a small pill */
+.badgePill {
+  width: 46px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin-left: var(--space-sm);
+  animation: skPulse 1.6s ease-in-out infinite;
+}

@@ -1,0 +1,27 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  min-height: 22px;
+  flex-shrink: 0;
+}
+
+.urgent {
+  background: var(--color-urgent);
+  color: var(--color-text-secondary);
+}
+
+.soon {
+  background: var(--color-soon);
+  color: var(--color-text-secondary);
+}
+
+.eventually {
+  background: var(--color-eventually);
+  color: var(--color-text-secondary);
+}

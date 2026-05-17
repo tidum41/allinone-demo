@@ -1,0 +1,56 @@
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 680px;
+  background: var(--color-surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-sm) 0 env(safe-area-inset-bottom, 16px);
+  z-index: 101;
+  animation: slideUp 250ms ease;
+}
+
+.handle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  margin: var(--space-sm) auto var(--space-md);
+}
+
+.label {
+  padding: 0 var(--space-md) var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--space-md);
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.row:active {
+  background: var(--color-border);
+}
+
+.row.active {
+  font-weight: var(--font-weight-medium);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

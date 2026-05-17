@@ -1,0 +1,76 @@
+.blob {
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+  min-height: 22vh;
+}
+
+.blob.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 32px;
+}
+
+.lineInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  line-height: 1.65;
+  color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  padding: 0;
+  min-height: 26px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* Placeholder via data-empty attribute (contenteditable can't use ::placeholder) */
+.lineInput[data-empty="true"][data-placeholder]::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-placeholder);
+  pointer-events: none;
+  /* renders in-flow so it doesn't shift layout */
+}
+
+.lineInput.strikethrough {
+  text-decoration: line-through;
+  color: var(--color-text-placeholder);
+}
+
+.square {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid #C0C0C0;
+  background: transparent;
+  flex-shrink: 0;
+  margin-top: 5px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  position: relative;
+}
+
+.squareChecked {
+  background: var(--color-text-secondary);
+  border-color: var(--color-text-secondary);
+}
+
+.squareChecked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 5px;
+  height: 8px;
+  border: 1.5px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}

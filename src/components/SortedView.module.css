@@ -1,0 +1,24 @@
+.wrap {
+  padding-bottom: var(--space-xl);
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0;
+}
+
+/* Shown when no tasks are sorted yet */
+.empty {
+  padding: var(--space-lg) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-placeholder);
+}
+
+/* Last sort timestamp — bottom of sorted list */
+.sortedAt {
+  padding: var(--space-sm) var(--space-md) var(--space-xl);
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-placeholder);
+  letter-spacing: 0.01em;
+}

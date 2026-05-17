@@ -1,0 +1,77 @@
+:root, [data-theme="light"] {
+  /* Background */
+  --color-bg: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-border: #EBEBEB;
+
+  /* Text */
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #888888;
+  --color-text-placeholder: #BBBBBB;
+
+  /* Category dots */
+  --color-school: #D4C5A9;
+  --color-product-design: #B8C9D9;
+  --color-involvement: #CEC4D9;
+  --color-home: #B8CDB8;
+  --color-personal: #D9B8BF;
+  --color-thinking: #D0D0D0;
+
+  /* Priority — from palette */
+  --color-urgent: #E0CEDB;
+  --color-soon: #CCC6DC;
+  --color-eventually: #C8D2D0;
+
+  /* Sort button */
+  --color-sort-bg: #1A1A1A;
+  --color-sort-fg: #FFFFFF;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 22px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-full: 999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+}
+
+[data-theme="dark"] {
+  --color-bg: #1C1C1E;
+  --color-surface: #2C2C2E;
+  --color-border: #3A3A3C;
+  --color-text-primary: #F2F2F7;
+  --color-text-secondary: #8E8E93;
+  --color-text-placeholder: #58585A;
+
+  --color-school: #BFA880;
+  --color-product-design: #7A9CB8;
+  --color-involvement: #9E8CB8;
+  --color-home: #7AAF7A;
+  --color-personal: #B87A88;
+  --color-thinking: #888888;
+
+  --color-urgent: #3A2E38;
+  --color-soon: #2C2B3C;
+  --color-eventually: #262E2D;
+
+  --color-sort-bg: #EDEDF0;
+  --color-sort-fg: #1C1C1E;
+}

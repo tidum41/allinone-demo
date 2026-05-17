@@ -1,0 +1,120 @@
+.sidebar {
+  width: 272px;
+  height: 100%;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.inner {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: max(env(safe-area-inset-top, 0px), 52px);
+}
+
+/* Pinned: all in one */
+.mainEntry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-md) var(--space-md);
+  min-height: 52px;
+  text-align: left;
+}
+
+.mainEntryTitle {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.mainEntryTag {
+  font-size: 10px;
+  color: var(--color-text-placeholder);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 var(--space-md);
+}
+
+.notesList {
+  padding: var(--space-sm) 0;
+}
+
+.noteItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.noteItem:active {
+  background: var(--color-border);
+}
+
+.noteTitle {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noteDate {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-placeholder);
+  flex-shrink: 0;
+}
+
+.empty {
+  padding: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-placeholder);
+}
+
+.footer {
+  padding: var(--space-md);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--space-md));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.newBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 44px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: 0 var(--space-sm);
+}
+
+.newBtn:active {
+  color: var(--color-text-primary);
+}
+
+.themeBtn {
+  min-width: 36px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-placeholder);
+}
+
+.themeBtn:active {
+  color: var(--color-text-primary);
+}

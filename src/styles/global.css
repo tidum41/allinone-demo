@@ -1,0 +1,191 @@
+@import './tokens.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+}
+
+#root {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+textarea, input {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Prevent iOS auto-zoom on focus */
+@media (pointer: coarse) {
+  textarea, input {
+    font-size: 16px;
+  }
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Shimmer animation for skeleton loader */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    var(--color-surface) 50%,
+    var(--color-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Bottom sheet overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ── Shell layout ────────────────────────────────────────── */
+
+/* Full-height flex row: sidebar + content as siblings */
+.shell {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar column — desktop: width animates open→closed */
+.sidebarCol {
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  width: 272px;
+  background: var(--color-bg);
+  transition: width 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Border lives on ::after so it moves with the column's right edge */
+.sidebarCol::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.sidebarColClosed {
+  width: 0;
+}
+
+/* Mobile backdrop — sits behind the fixed sidebar, dims content */
+.sidebarBackdrop {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .sidebarBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.18);
+    animation: fadeIn 280ms ease;
+  }
+}
+
+/* Content column — fills remaining space, scrolls independently */
+.contentCol {
+  flex: 1;
+  min-width: 0;        /* prevents flex overflow */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior-y: none;
+  /* hide scrollbar so it doesn't bleed over sticky menubar */
+  scrollbar-width: none;
+}
+
+.contentCol::-webkit-scrollbar {
+  display: none;
+}
+
+/* App — centered within content column */
+.app {
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile — switch to fixed overlay + transform instead of flex-push */
+@media (max-width: 680px) {
+  .sidebarCol,
+  .sidebarColClosed {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100dvh;
+    z-index: 201;
+    width: 272px;
+    overflow: hidden;
+    transform: translateX(-272px);
+    transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sidebarColOpen {
+    transform: translateX(0);
+  }
+}

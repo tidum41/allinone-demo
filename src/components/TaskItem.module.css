@@ -1,0 +1,160 @@
+@keyframes taskIn {
+  from { transform: translateY(4px); }
+  to   { transform: translateY(0); }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: 44px;
+  cursor: text;
+  animation: taskIn 180ms ease-out both;
+  transition: opacity var(--transition-normal), background var(--transition-fast), transform var(--transition-fast);
+  border-radius: 8px;
+  user-select: none;
+}
+
+/* ── Completion sequence ──────────────────────────────────────────── */
+
+/* 1. Checkbox fills and bounces */
+@keyframes checkFill {
+  0%   { background: transparent; border-color: #C0C0C0; transform: scale(1); }
+  45%  { background: var(--color-text-secondary); border-color: var(--color-text-secondary); transform: scale(1.2); }
+  70%  { transform: scale(0.92); }
+  100% { background: var(--color-text-secondary); border-color: var(--color-text-secondary); transform: scale(1); }
+}
+
+/* 2. Checkmark tick draws in */
+@keyframes tickIn {
+  from { opacity: 0; stroke-dashoffset: 12; }
+  to   { opacity: 1; stroke-dashoffset: 0; }
+}
+
+/* 3. Task text strikes through */
+@keyframes strikeIn {
+  from { text-decoration-color: transparent; color: var(--color-text-primary); }
+  to   { text-decoration-color: var(--color-text-secondary); color: var(--color-text-secondary); }
+}
+
+/* 4. Item fades and drifts down — the wrapper shell collapses height simultaneously */
+@keyframes taskOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(10px); }
+}
+
+.item.completing {
+  pointer-events: none;
+  animation: taskOut 200ms ease-in 1580ms both;
+}
+
+.item.completing .square {
+  position: relative;
+  animation: checkFill 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.item.completing .checkTick {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: tickIn 180ms ease 120ms both;
+  stroke-dasharray: 12;
+  stroke-dashoffset: 12;
+}
+
+.item.completing .text {
+  text-decoration: line-through;
+  animation: strikeIn 220ms ease 80ms both;
+}
+
+/* Long-press visual charging cue */
+@keyframes holdCharge {
+  0%   { background: transparent; transform: scale(1); }
+  40%  { background: var(--color-surface); }
+  100% { background: var(--color-surface); transform: scale(1.015); }
+}
+
+.item.holding {
+  animation: taskIn 180ms ease-out both, holdCharge 920ms ease forwards;
+  cursor: grab;
+}
+
+/* Ghost placeholder — faded row left behind in source section */
+.item.dragging {
+  opacity: 0.25;
+  pointer-events: none;
+  animation: none;
+}
+
+/* Checkbox: square flush-left (matches blob), padding-right = gap to text */
+.checkbox {
+  min-width: 26px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-right: 10px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.square {
+  display: block;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid #C0C0C0;
+  background: transparent;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.checkbox:active .square {
+  background: var(--color-border);
+  border-color: var(--color-text-secondary);
+}
+
+/* textWrap padding (44-22.5)/2 ≈ 11px centers single-line text in the 44px row */
+.textWrap {
+  flex: 1;
+  min-width: 0;
+  cursor: text;
+  padding: 11px 0;
+}
+
+.text {
+  display: block;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
+.textInput {
+  display: block;
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  padding: 0;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+/* Priority badge: same 44px tap zone, stays at first-line height on wrap */
+.priorityWrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 2px;
+}
