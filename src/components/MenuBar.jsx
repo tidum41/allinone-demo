@@ -51,7 +51,7 @@ function SidebarIcon() {
   )
 }
 
-export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBullet, onUndo, loading, sortDone, title, onFormat, isSidebarOpen }) {
+export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBullet, onUndo, loading, sortDone, title, onFormat, isSidebarOpen, activeLineType }) {
   const [formatOpen, setFormatOpen] = useState(false)
   const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false })
   const aaRef = useRef(null)
@@ -147,21 +147,25 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
           )}
         </div>
 
-        <button className={styles.iconBtn} onClick={onUndo} aria-label="Undo">
+        <button
+          className={styles.iconBtn}
+          onClick={e => { onUndo(); e.currentTarget.blur() }}
+          aria-label="Undo"
+        >
           <UndoIcon />
         </button>
         <button
-          className={styles.iconBtn}
+          className={`${styles.iconBtn} ${activeLineType === 'bullet' ? styles.iconBtnActive : ''}`}
           onMouseDown={e => e.preventDefault()}
-          onClick={onBullet}
+          onClick={e => { onBullet(); e.currentTarget.blur() }}
           aria-label="Toggle bullet"
         >
           <BulletIcon />
         </button>
         <button
-          className={styles.iconBtn}
+          className={`${styles.iconBtn} ${activeLineType === 'check' ? styles.iconBtnActive : ''}`}
           onMouseDown={e => e.preventDefault()}
-          onClick={onChecklist}
+          onClick={e => { onChecklist(); e.currentTarget.blur() }}
           aria-label="Toggle checklist"
         >
           <ChecklistIcon />

@@ -60,6 +60,16 @@
   color: var(--color-text-primary);
 }
 
+.iconBtn:focus {
+  outline: none;
+}
+
+.iconBtn:focus-visible {
+  outline: 2px solid var(--color-text-secondary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 
 .iconBtnActive {
   color: var(--color-text-primary);

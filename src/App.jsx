@@ -49,6 +49,7 @@ export default function App() {
   const [showSummary, setShowSummary] = useState(false)
   const [sortDone, setSortDone] = useState(false)
   const [newTaskId, setNewTaskId] = useState(null)
+  const [activeLineType, setActiveLineType] = useState('text')
 
   useEffect(() => {
     if (tasksLoaded && savedTasks.length > 0) {
@@ -383,6 +384,7 @@ export default function App() {
             sortDone={sortDone}
             title="all in one"
             onFormat={(type) => blobRef.current?.format(type)}
+            activeLineType={activeLineType}
           />
 
           <Blob
@@ -390,6 +392,7 @@ export default function App() {
             lines={lines}
             onChange={updateLines}
             onBeforeLineDelete={handleBeforeLineDelete}
+            onLineTypeChange={setActiveLineType}
             disabled={!blobLoaded}
           />
 

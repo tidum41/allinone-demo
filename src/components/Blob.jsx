@@ -110,7 +110,7 @@ const BlobLine = forwardRef(function BlobLine(
   )
 })
 
-export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDelete, disabled, collapsed }, ref) {
+export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDelete, onLineTypeChange, disabled, collapsed }, ref) {
   const inputRefs = useRef([])
   const focusedIdx = useRef(0)
   const blobContainerRef = useRef(null)           // direct DOM ref for class toggling
@@ -337,12 +337,15 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
       if (!cur) {
         const newLine = makeCheckLine()
         onChange([...lines, newLine])
+        onLineTypeChange?.('check')
         setTimeout(() => inputRefs.current[lines.length]?.focus(), 0)
         return
       }
+      const newType = cur.type === 'check' ? 'text' : 'check'
       onChange(lines.map((l, i) =>
-        i === idx ? { ...l, type: l.type === 'check' ? 'text' : 'check', checked: false } : l
+        i === idx ? { ...l, type: newType, checked: false } : l
       ))
+      onLineTypeChange?.(newType)
       setTimeout(() => inputRefs.current[idx]?.focus(), 0)
     },
 
@@ -352,12 +355,15 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
       if (!cur) {
         const newLine = makeBulletLine()
         onChange([...lines, newLine])
+        onLineTypeChange?.('bullet')
         setTimeout(() => inputRefs.current[lines.length]?.focus(), 0)
         return
       }
+      const newType = cur.type === 'bullet' ? 'text' : 'bullet'
       onChange(lines.map((l, i) =>
-        i === idx ? { ...l, type: l.type === 'bullet' ? 'text' : 'bullet' } : l
+        i === idx ? { ...l, type: newType } : l
       ))
+      onLineTypeChange?.(newType)
       setTimeout(() => inputRefs.current[idx]?.focus(), 0)
     },
 
@@ -390,7 +396,7 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
       if (el) el.focus()
       document.execCommand('undo', false, null)
     }
-  }), [lines, onChange])
+  }), [lines, onChange, onLineTypeChange])
 
   const handleContainerClick = useCallback((e) => {
     if (e.target === e.currentTarget) {
@@ -426,6 +432,7 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
           onToggleCheck={() => handleToggleCheck(idx)}
           onFocus={() => {
             focusedIdx.current = idx
+            onLineTypeChange?.(lines[idx].type)
             // Keyboard navigation (Tab, etc.) clears selection.
             // Mouse clicks are handled by pointerUp; Shift+Arrow is suppressed via skip flag.
             if (lineSel && !skipNextFocusClearRef.current && !dragAnchorRef.current) {
