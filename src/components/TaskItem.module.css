@@ -94,7 +94,8 @@
 }
 
 /* Checkbox: fills full row height via align-self:stretch so touch target = entire row.
-   padding-top 14px places square center at 22px = text first-line center (11px + 11.25px half-leading). */
+   padding-top 16px = textWrap padding-top (11px) + blob's margin-top (5px), matching
+   the exact same square-to-text-top offset the blob uses. */
 .checkbox {
   min-width: 26px;
   align-self: stretch;
@@ -102,7 +103,7 @@
   align-items: flex-start;
   justify-content: flex-start;
   padding-right: 10px;
-  padding-top: 14px;
+  padding-top: 16px;
   flex-shrink: 0;
 }
 
@@ -162,5 +163,5 @@
   align-items: flex-start;
   align-self: stretch;
   flex-shrink: 0;
-  padding: 14px 2px 0;
+  padding: 16px 2px 0;
 }
