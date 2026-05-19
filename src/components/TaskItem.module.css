@@ -93,14 +93,16 @@
   animation: none;
 }
 
-/* Checkbox: square flush-left (matches blob), padding-right = gap to text */
+/* Checkbox: fills full row height via align-self:stretch so touch target = entire row.
+   padding-top 14px places square center at 22px = text first-line center (11px + 11.25px half-leading). */
 .checkbox {
   min-width: 26px;
-  min-height: 44px;
+  align-self: stretch;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
   padding-right: 10px;
+  padding-top: 14px;
   flex-shrink: 0;
 }
 
@@ -153,11 +155,12 @@
   word-break: break-word;
 }
 
-/* Priority badge: same 44px tap zone, stays at first-line height on wrap */
+/* Priority badge: stretches with row, padding-top mirrors checkbox so badge
+   aligns with the first text line on multi-line tasks. */
 .priorityWrap {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  align-self: stretch;
   flex-shrink: 0;
-  min-height: 44px;
-  padding: 0 2px;
+  padding: 14px 2px 0;
 }
