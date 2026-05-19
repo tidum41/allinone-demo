@@ -99,6 +99,13 @@
   transition: background 150ms ease;
 }
 
+/* Suppress text selection while drag-to-select is active (toggled via direct DOM) */
+.tasksSelecting,
+.tasksSelecting * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
 /* Drop indicator bar at bottom of tasks list */
 .dropIndicator {
   height: 2px;

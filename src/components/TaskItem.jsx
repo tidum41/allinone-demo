@@ -6,7 +6,7 @@ const LONG_PRESS_MS = 1000
 const MOVE_THRESHOLD = 8   // px before long-press is cancelled
 const HOLDING_FEEDBACK_MS = 80 // how soon the charging cue appears
 
-export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onTextChange, onAddAfter, onDragReady, isBeingDragged, isCompleting, autoFocus }) {
+export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onTextChange, onAddAfter, onDragReady, isBeingDragged, isCompleting, autoFocus, isSelected }) {
   const [completing, setCompleting] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(task.text)
@@ -171,12 +171,14 @@ export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onText
   return (
     <div
       ref={itemRef}
+      data-task-id={task.id}
       className={[
         styles.item,
         'taskRow',
         effectiveCompleting ? styles.completing : '',
         holding ? styles.holding : '',
         isBeingDragged ? styles.dragging : '',
+        isSelected ? styles.selected : '',
       ].join(' ')}
       style={effectiveCompleting ? undefined : { animationDelay: `${index * 28}ms` }}
       onClick={handleRowClick}

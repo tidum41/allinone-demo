@@ -320,6 +320,15 @@ export default function App() {
     pushUndo({ type: 'blobDelete', lines: currentLines })
   }, [pushUndo])
 
+  const handleDeleteTasks = useCallback((ids) => {
+    const idSet = new Set(ids)
+    setTasks(prev => {
+      const updated = prev.filter(t => !idSet.has(t.id))
+      persistTasks(updated)
+      return updated
+    })
+  }, [persistTasks])
+
   const sidebarColClass = `sidebarCol${sidebarOpen ? ' sidebarColOpen' : ' sidebarColClosed'}`
   const sidebarDragStyle = dragOffset !== null
     ? { transform: `translateX(${dragOffset}px)`, transition: 'none' }
@@ -410,6 +419,7 @@ export default function App() {
               onTextChange={handleTextChange}
               onAddAfter={handleAddAfter}
               newTaskId={newTaskId}
+              onDeleteSelected={handleDeleteTasks}
               completedTasks={savedCompleted}
               onUncheck={handleUncheck}
               completedSectionRef={completedSectionRef}

@@ -19,7 +19,7 @@ function formatLastSorted(iso) {
   return `sorted ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
 }
 
-export function SortedView({ tasks, completingItems = {}, onComplete, onPriorityChange, onCategoryChange, onTextChange, onAddAfter, newTaskId, completedTasks, onUncheck, completedSectionRef }) {
+export function SortedView({ tasks, completingItems = {}, onComplete, onPriorityChange, onCategoryChange, onTextChange, onAddAfter, newTaskId, onDeleteSelected, completedTasks, onUncheck, completedSectionRef }) {
   const completingTaskIds = new Set(Object.keys(completingItems))
 
   const grouped = CATEGORY_ORDER.reduce((acc, cat) => {
@@ -153,6 +153,7 @@ export function SortedView({ tasks, completingItems = {}, onComplete, onPriority
             onTextChange={onTextChange}
             onAddAfter={onAddAfter}
             newTaskId={newTaskId}
+            onDeleteSelected={onDeleteSelected}
             sectionRef={el => { sectionRefs.current[cat] = el }}
             isDragTarget={dropTarget === cat}
             draggingTaskId={draggingTaskId}

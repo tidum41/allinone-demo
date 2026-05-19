@@ -81,6 +81,11 @@
   cursor: grab;
 }
 
+/* Multi-row drag selection highlight */
+.item.selected {
+  background: var(--color-surface);
+}
+
 /* Ghost placeholder — faded row left behind in source section */
 .item.dragging {
   opacity: 0.25;
