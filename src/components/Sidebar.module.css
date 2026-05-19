@@ -59,6 +59,10 @@
   transition: background var(--transition-fast);
 }
 
+.noteItem:hover .noteTitle {
+  color: var(--color-text-secondary);
+}
+
 .noteItem:active {
   background: var(--color-border);
 }
@@ -102,6 +106,7 @@
   padding: 0 var(--space-sm);
 }
 
+.newBtn:hover,
 .newBtn:active {
   color: var(--color-text-primary);
 }
@@ -112,9 +117,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-placeholder);
+  padding: 0 var(--space-sm);
+  color: var(--color-text-secondary);
 }
 
+.themeBtn:hover,
 .themeBtn:active {
   color: var(--color-text-primary);
+}
+
+/* Suppress scrollbar on desktop when many notes */
+.inner {
+  scrollbar-width: none;
+}
+.inner::-webkit-scrollbar {
+  display: none;
 }

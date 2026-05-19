@@ -6,11 +6,13 @@ const PRIORITY_ORDER = { Urgent: 0, Soon: 1, Eventually: 2 }
 
 export function CategorySection({
   category, tasks,
-  onComplete, onPriorityChange, onCategoryChange, onTextChange,
+  onComplete, onPriorityChange, onCategoryChange, onTextChange, onAddAfter,
   // completing animation props
   completingTaskIds,
   // drag props
   sectionRef, isDragTarget, draggingTaskId, onDragReady,
+  // inline-add state
+  newTaskId,
 }) {
   const [isOpen, setIsOpen] = useState(() => {
     const saved = localStorage.getItem(`cat-open-${category}`)
@@ -61,9 +63,11 @@ export function CategorySection({
                 onPriorityChange={onPriorityChange}
                 onCategoryChange={onCategoryChange}
                 onTextChange={onTextChange}
+                onAddAfter={onAddAfter}
                 onDragReady={onDragReady}
                 isBeingDragged={task.id === draggingTaskId}
                 isCompleting={completingTaskIds?.has(task.id)}
+                autoFocus={task.id === newTaskId}
               />
             </div>
           ))}

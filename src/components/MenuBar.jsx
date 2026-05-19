@@ -10,6 +10,19 @@ function ChecklistIcon() {
   )
 }
 
+function BulletIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+      <circle cx="3" cy="5" r="1.5" fill="currentColor"/>
+      <line x1="7" y1="5" x2="17" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="3" cy="10" r="1.5" fill="currentColor"/>
+      <line x1="7" y1="10" x2="17" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="3" cy="15" r="1.5" fill="currentColor"/>
+      <line x1="7" y1="15" x2="17" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
 function UndoIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
@@ -38,24 +51,25 @@ function SidebarIcon() {
   )
 }
 
-export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onUndo, hasUndo, loading, sortDone, title, onFormat }) {
+export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBullet, onUndo, loading, sortDone, title, onFormat, isSidebarOpen }) {
   const [formatOpen, setFormatOpen] = useState(false)
   const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false })
   const aaRef = useRef(null)
 
+  const refreshFormats = () => {
+    try {
+      setActiveFormats({
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+      })
+    } catch {}
+  }
+
   // Track which formats are active at the current cursor position
   useEffect(() => {
-    const handler = () => {
-      try {
-        setActiveFormats({
-          bold: document.queryCommandState('bold'),
-          italic: document.queryCommandState('italic'),
-          underline: document.queryCommandState('underline'),
-        })
-      } catch {}
-    }
-    document.addEventListener('selectionchange', handler)
-    return () => document.removeEventListener('selectionchange', handler)
+    document.addEventListener('selectionchange', refreshFormats)
+    return () => document.removeEventListener('selectionchange', refreshFormats)
   }, [])
 
   // Close popover on outside click / touch
@@ -78,7 +92,11 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onUndo,
 
   return (
     <header className={styles.menuBar}>
-      <button className={styles.sidebarBtn} onClick={onSidebarOpen} aria-label="Open notes">
+      <button
+        className={`${styles.sidebarBtn} ${isSidebarOpen ? styles.sidebarBtnActive : ''}`}
+        onClick={onSidebarOpen}
+        aria-label="Open notes"
+      >
         <SidebarIcon />
       </button>
 
@@ -100,48 +118,55 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onUndo,
             <div className={styles.formatPopover}>
               <button
                 className={`${styles.formatBtn} ${activeFormats.bold ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('bold') }}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('bold'); requestAnimationFrame(refreshFormats) }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('bold') }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('bold'); requestAnimationFrame(refreshFormats) }}
                 aria-label="Bold"
               >
                 <b>B</b>
               </button>
               <button
-                className={`${styles.formatBtn} ${styles.fmtItalic} ${activeFormats.italic ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('italic') }}
+                className={`${styles.formatBtn} ${activeFormats.italic ? styles.formatBtnOn : ''}`}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('italic'); requestAnimationFrame(refreshFormats) }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('italic') }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('italic'); requestAnimationFrame(refreshFormats) }}
                 aria-label="Italic"
               >
-                <i>I</i>
+                <span className={styles.fmtItalicLabel}>I</span>
               </button>
               <button
-                className={`${styles.formatBtn} ${styles.fmtUnderline} ${activeFormats.underline ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('underline') }}
+                className={`${styles.formatBtn} ${activeFormats.underline ? styles.formatBtnOn : ''}`}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('underline'); requestAnimationFrame(refreshFormats) }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('underline') }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('underline'); requestAnimationFrame(refreshFormats) }}
                 aria-label="Underline"
               >
-                <u>U</u>
+                <span className={styles.fmtUnderlineLabel}>U</span>
               </button>
             </div>
           )}
         </div>
 
-        <button
-          className={`${styles.iconBtn} ${!hasUndo ? styles.iconBtnDim : ''}`}
-          onClick={onUndo}
-          aria-label="Undo"
-        >
+        <button className={styles.iconBtn} onClick={onUndo} aria-label="Undo">
           <UndoIcon />
         </button>
-        <button className={styles.iconBtn} onClick={onChecklist} aria-label="Toggle checklist">
+        <button
+          className={styles.iconBtn}
+          onMouseDown={e => e.preventDefault()}
+          onClick={onBullet}
+          aria-label="Toggle bullet"
+        >
+          <BulletIcon />
+        </button>
+        <button
+          className={styles.iconBtn}
+          onMouseDown={e => e.preventDefault()}
+          onClick={onChecklist}
+          aria-label="Toggle checklist"
+        >
           <ChecklistIcon />
         </button>
-        <button className={styles.iconBtn} onClick={onSummary} aria-label="Summary">
-          <SummaryIcon />
-        </button>
+        {/* Summary hidden for now — keep code, functionality TBD */}
 
         <button
           className={`${styles.sortBtn} ${loading ? styles.sorting : ''} ${sortDone ? styles.sortDone : ''}`}

@@ -3,7 +3,7 @@ import { useSession } from './hooks/useSession'
 import { categorizeTasks } from './lib/groq'
 import { MenuBar } from './components/MenuBar'
 import { Sidebar } from './components/Sidebar'
-import { Blob, makeTextLine } from './components/Blob'
+import { Blob, makeTextLine, makeId } from './components/Blob'
 import { SortedView } from './components/SortedView'
 import { SkeletonLoader } from './components/SkeletonLoader'
 import { SummaryPanel } from './components/SummaryPanel'
@@ -11,6 +11,11 @@ import { NoteEditor } from './components/NoteEditor'
 
 const VIEW_MAIN = 'main'
 const VIEW_NOTE_EDITOR = 'noteEditor'
+
+function stripHtml(html) {
+  if (!html) return ''
+  return html.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').trim()
+}
 
 export default function App() {
   const {
@@ -27,6 +32,7 @@ export default function App() {
 
   const blobRef = useRef(null)
   const sidebarRef = useRef(null)
+  const completedSectionRef = useRef(null)
   const dragOffsetRef = useRef(null)
   const notesRef = useRef([])
   const completingTimersRef = useRef({})  // taskId → setTimeout ID, cancelled on undo
@@ -42,6 +48,7 @@ export default function App() {
   const [activeNote, setActiveNote] = useState(null)
   const [showSummary, setShowSummary] = useState(false)
   const [sortDone, setSortDone] = useState(false)
+  const [newTaskId, setNewTaskId] = useState(null)
 
   useEffect(() => {
     if (tasksLoaded && savedTasks.length > 0) {
@@ -126,7 +133,9 @@ export default function App() {
     const last = undoStack[undoStack.length - 1]
     setUndoStack(prev => prev.slice(0, -1))
 
-    if (last.type === 'sort') {
+    if (last.type === 'blobDelete') {
+      updateLines(last.lines)
+    } else if (last.type === 'sort') {
       if (last.lines) updateLines(last.lines)
       setTasks(last.tasks)
       persistTasks(last.tasks)
@@ -223,10 +232,10 @@ export default function App() {
     const completionTimer = setTimeout(() => {
       delete completingTimersRef.current[task.id]
       setCompletingItems(prev => { const n = { ...prev }; delete n[task.id]; return n })
-      // Persist to Firebase and archive note only after animation completes
+      // Persist and auto-expand completed section so the new item is visible
       persistCompleted(task)
-      const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      const entryLine = makeTextLine(`${task.text}  ·  ${dateStr}`)
+      completedSectionRef.current?.expand()
+      const entryLine = makeTextLine(task.text)
       const archive = notesRef.current.find(n => n.title?.toLowerCase() === 'completed archive')
       if (archive) {
         let existing = []
@@ -241,13 +250,28 @@ export default function App() {
 
   const handleUncheck = useCallback((task) => {
     removeCompleted(task.id)
+    // Remove from completed archive note
+    const archive = notesRef.current.find(n => n.title?.toLowerCase() === 'completed archive')
+    if (archive) {
+      try {
+        const existing = JSON.parse(archive.body || '[]')
+        const filtered = existing.filter(l => !stripHtml(l.content || '').startsWith(task.text))
+        if (filtered.length !== existing.length) {
+          if (filtered.length === 0) {
+            deleteNote(archive.id)  // don't leave behind an empty "[]" body
+          } else {
+            saveNote(archive.id, 'completed archive', JSON.stringify(filtered))
+          }
+        }
+      } catch {}
+    }
     const restored = { ...task, dateCompleted: undefined }
     setTasks(prev => {
       const updated = [...prev, restored]
       persistTasks(updated)
       return updated
     })
-  }, [removeCompleted, persistTasks])
+  }, [removeCompleted, persistTasks, saveNote, deleteNote])
 
   const handlePriorityChange = useCallback((task, priority) => {
     setTasks(prev => {
@@ -276,6 +300,25 @@ export default function App() {
       return updated
     })
   }, [persistTasks])
+
+  const handleAddAfter = useCallback((task) => {
+    const newId = makeId()
+    const newTask = { id: newId, text: '', category: task.category, priority: null }
+    setTasks(prev => {
+      const idx = prev.findIndex(t => t.id === task.id)
+      const insertAt = idx >= 0 ? idx + 1 : prev.length
+      const updated = [...prev.slice(0, insertAt), newTask, ...prev.slice(insertAt)]
+      persistTasks(updated)
+      return updated
+    })
+    setNewTaskId(newId)
+    // Clear focus marker once the new task has mounted
+    setTimeout(() => setNewTaskId(null), 300)
+  }, [persistTasks])
+
+  const handleBeforeLineDelete = useCallback((currentLines) => {
+    pushUndo({ type: 'blobDelete', lines: currentLines })
+  }, [pushUndo])
 
   const sidebarColClass = `sidebarCol${sidebarOpen ? ' sidebarColOpen' : ' sidebarColClosed'}`
   const sidebarDragStyle = dragOffset !== null
@@ -315,6 +358,7 @@ export default function App() {
           onDelete={deleteNote}
           onBack={() => setView(VIEW_MAIN)}
           onSidebarOpen={toggleSidebar}
+          isSidebarOpen={sidebarOpen}
         />
       ) : (
         <>
@@ -323,8 +367,9 @@ export default function App() {
             onSort={handleSort}
             onSummary={() => setShowSummary(true)}
             onChecklist={() => blobRef.current?.toggleChecklist()}
+            onBullet={() => blobRef.current?.toggleBullet()}
             onUndo={handleUndo}
-            hasUndo={undoStack.length > 0}
+            isSidebarOpen={sidebarOpen}
             loading={loading}
             sortDone={sortDone}
             title="all in one"
@@ -335,15 +380,24 @@ export default function App() {
             ref={blobRef}
             lines={lines}
             onChange={updateLines}
+            onBeforeLineDelete={handleBeforeLineDelete}
             disabled={!blobLoaded}
           />
 
           {loading && <SkeletonLoader />}
 
           {!loading && error && (
-            <p style={{ padding: 'var(--space-md)', color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-              {error}
-            </p>
+            <div style={{ padding: 'var(--space-md) var(--space-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-placeholder)', flex: 1 }}>
+                {error}
+              </span>
+              <button
+                onClick={handleSort}
+                style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', padding: '0 var(--space-sm)', minHeight: '32px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+              >
+                retry
+              </button>
+            </div>
           )}
 
           {!loading && sorted && (
@@ -354,8 +408,11 @@ export default function App() {
               onPriorityChange={handlePriorityChange}
               onCategoryChange={handleCategoryChange}
               onTextChange={handleTextChange}
+              onAddAfter={handleAddAfter}
+              newTaskId={newTaskId}
               completedTasks={savedCompleted}
               onUncheck={handleUncheck}
+              completedSectionRef={completedSectionRef}
             />
           )}
 

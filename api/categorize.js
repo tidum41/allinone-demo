@@ -61,22 +61,28 @@ export default async function handler(req, res) {
     ? `\n\nThe user has made these manual corrections before — use them:\n${categoryRules.map(r => `- "${r.taskText}" → "${r.correctedCategory}"`).join('\n')}`
     : ''
 
-  const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      max_tokens: 1500,
-      temperature: 0.2,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT + learnedCorrections },
-        { role: 'user', content: `Here is my note blob. Extract and categorize all tasks:\n\n${text}` },
-      ],
-    }),
-  })
+  let groqRes
+  try {
+    groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 1500,
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT + learnedCorrections },
+          { role: 'user', content: `Here is my note blob. Extract and categorize all tasks:\n\n${text}` },
+        ],
+      }),
+    })
+  } catch (e) {
+    console.error('Groq fetch error:', e)
+    return res.status(502).json({ error: 'Could not reach categorization service' })
+  }
 
   if (!groqRes.ok) {
     const err = await groqRes.text()

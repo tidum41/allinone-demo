@@ -5,11 +5,19 @@ export async function categorizeTasks(blobText, categoryRules = []) {
     body: JSON.stringify({ text: blobText, categoryRules }),
   })
 
-  const data = await response.json()
+  // Read as text first — avoids "Unexpected end of JSON input" when the server
+  // returns an HTML error page or an empty body on an unhandled exception.
+  const text = await response.text()
 
   if (!response.ok) {
-    throw new Error(data?.error || `Categorization failed (${response.status})`)
+    let msg = `Categorization failed (${response.status})`
+    try { msg = JSON.parse(text)?.error || msg } catch {}
+    throw new Error(msg)
   }
 
-  return data
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error('Invalid response from categorization service')
+  }
 }

@@ -17,6 +17,8 @@
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
   gap: var(--space-xs);
+  user-select: none;
+  cursor: default;
 }
 
 .backBtn {
@@ -27,6 +29,10 @@
   justify-content: center;
   color: var(--color-text-secondary);
   flex-shrink: 0;
+}
+
+.backBtnActive {
+  color: var(--color-text-primary);
 }
 
 .backBtn:active {
@@ -66,19 +72,73 @@
   color: var(--color-text-secondary);
 }
 
+.iconBtn:hover,
 .iconBtn:active {
   color: var(--color-text-primary);
+}
+
+.deleteWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .deleteBtn {
   min-height: 44px;
   padding: 0 var(--space-sm);
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: #FF3B30;
+  transition: opacity var(--transition-fast);
 }
 
 .deleteBtn:active {
-  color: var(--color-text-primary);
+  opacity: 0.6;
+}
+
+.deleteBtnActive {
+  opacity: 0.7;
+}
+
+/* Floating confirm popover — appears below the delete button */
+.deletePopover {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 6px 10px 6px var(--space-md);
+  white-space: nowrap;
+  z-index: 20;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  animation: popoverIn 140ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.deletePopoverLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.deletePopoverConfirm {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: #FF3B30;
+  min-height: 32px;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition-fast);
+}
+
+.deletePopoverConfirm:active {
+  opacity: 0.6;
 }
 
 .iconBtnActive {
@@ -97,6 +157,11 @@
   position: relative;
 }
 
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .formatPopover {
   position: absolute;
   top: calc(100% + 6px);
@@ -109,6 +174,7 @@
   padding: 4px;
   z-index: 20;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  animation: popoverIn 130ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 
 .formatBtn {
@@ -134,5 +200,5 @@
   color: var(--color-text-primary);
 }
 
-.fmtItalic { font-style: italic; }
-.fmtUnderline { text-decoration: underline; }
+.fmtItalicLabel { font-style: italic; }
+.fmtUnderlineLabel { text-decoration: underline; }

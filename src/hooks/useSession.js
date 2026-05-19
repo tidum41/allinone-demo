@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { makeTextLine } from '../components/Blob'
+import { makeTextLine, makeCheckLine, makeBulletLine } from '../components/Blob'
 
 // Peter Parker — product designer at a mid-size studio in Queens
 const DEMO_LINES = [
@@ -18,7 +18,29 @@ const DEMO_LINES = [
   "prototype the new gesture-based interactions for mobile",
   "read that article on ethical design in surveillance tech",
   "finish online typography course — 3 modules left",
-].map(text => makeTextLine(text))
+].map(text => makeCheckLine(text))
+
+const THINGS_I_LIKE_BODY = JSON.stringify([
+  makeBulletLine("swinging between buildings at 6am before anyone's awake"),
+  makeBulletLine("that moment when a wireframe just clicks"),
+  makeBulletLine("Aunt May's chicken soup, no notes"),
+  makeBulletLine("old film cameras — especially the ones you have to manually focus"),
+  makeBulletLine("when a user test goes way better than expected"),
+  makeBulletLine("MJ's laugh when something genuinely surprises her"),
+  makeBulletLine("late night debugging sessions with lo-fi beats"),
+  makeBulletLine("the smell of a used bookstore in the rain"),
+  makeBulletLine("finding an elegant design solution after days of nothing"),
+  makeBulletLine("rooftops in general, honestly"),
+])
+
+const DEFAULT_NOTES = [
+  {
+    id: 'demo-note-likes',
+    title: 'things i like',
+    body: THINGS_I_LIKE_BODY,
+    updatedAt: new Date().toISOString(),
+  },
+]
 
 function makeId() {
   return Math.random().toString(36).slice(2, 10)
@@ -49,12 +71,12 @@ function stripHtml(html) {
 export function useSession() {
   const [lines, setLines] = useState(() => ssGet('demo:lines', DEMO_LINES))
   const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:rules', []))
-  const [notes, setNotes] = useState(() => ssGet('demo:notes', []))
+  const [notes, setNotes] = useState(() => ssGet('demo:notes', DEFAULT_NOTES))
   const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:tasks', []))
   const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:completed', []))
   const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:prevTasks', []))
 
-  const blobText = lines.map(l => stripHtml(l.content)).filter(Boolean).join('\n')
+  const blobText = lines.filter(l => l.type === 'check').map(l => stripHtml(l.content)).filter(Boolean).join('\n')
 
   const updateLines = useCallback((newLines) => {
     setLines(newLines)

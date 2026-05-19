@@ -6,7 +6,7 @@ const LONG_PRESS_MS = 1000
 const MOVE_THRESHOLD = 8   // px before long-press is cancelled
 const HOLDING_FEEDBACK_MS = 80 // how soon the charging cue appears
 
-export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onTextChange, onDragReady, isBeingDragged, isCompleting }) {
+export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onTextChange, onAddAfter, onDragReady, isBeingDragged, isCompleting, autoFocus }) {
   const [completing, setCompleting] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(task.text)
@@ -70,13 +70,28 @@ export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onText
     onComplete(task)  // fires immediately — App manages the 1.8s display window
   }
 
-  // ── Text editing ──────────────────────────────────────────────────
-  const handleTextClick = () => {
+  // Auto-focus when created via Enter (onAddAfter)
+  useEffect(() => {
+    if (!autoFocus) return
     setEditing(true)
     setTimeout(() => {
       const el = textareaRef.current
       if (!el) return
       el.focus()
+      el.style.height = 'auto'
+      el.style.height = el.scrollHeight + 'px'
+    }, 0)
+  }, []) // eslint-disable-line
+
+  // ── Text editing ──────────────────────────────────────────────────
+  const handleTextClick = (clickOffset = null) => {
+    setEditing(true)
+    setTimeout(() => {
+      const el = textareaRef.current
+      if (!el) return
+      el.focus()
+      const pos = clickOffset !== null ? Math.min(clickOffset, el.value.length) : el.value.length
+      el.setSelectionRange(pos, pos)
       el.style.height = 'auto'
       el.style.height = el.scrollHeight + 'px'
     }, 0)
@@ -100,12 +115,57 @@ export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onText
 
   const handleTextKeyDown = (e) => {
     if (e.key === 'Escape') { e.preventDefault(); textareaRef.current?.blur() }
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); textareaRef.current?.blur() }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      textareaRef.current?.blur()   // save current task first
+      onAddAfter?.(task)
+    }
   }
 
   const handleRowClick = (e) => {
     if (e.target.closest('button')) return
-    if (!editing) handleTextClick()
+    if (!editing) {
+      // Capture click-point character offset from the rendered span.
+      // caretRangeFromPoint can return offset 0 for clicks in padding/whitespace
+      // even when the actual text is far to the right — validate before trusting it.
+      let clickOffset = null
+      try {
+        let textNode = null
+        let rawOffset = null
+
+        if (document.caretRangeFromPoint) {
+          const range = document.caretRangeFromPoint(e.clientX, e.clientY)
+          if (range?.startContainer?.nodeType === Node.TEXT_NODE) {
+            textNode  = range.startContainer
+            rawOffset = range.startOffset
+          }
+        } else if (document.caretPositionFromPoint) {
+          const pos = document.caretPositionFromPoint(e.clientX, e.clientY)
+          if (pos?.offsetNode?.nodeType === Node.TEXT_NODE) {
+            textNode  = pos.offsetNode
+            rawOffset = pos.offset
+          }
+        }
+
+        if (textNode !== null && rawOffset !== null) {
+          // Offset 0 is only trustworthy when the click is genuinely near the
+          // start of the text. Validate by checking the first character's rect.
+          if (rawOffset === 0 && textNode.length > 0) {
+            const testRange = document.createRange()
+            testRange.setStart(textNode, 0)
+            testRange.setEnd(textNode, 1)
+            const charRect = testRange.getBoundingClientRect()
+            // If the click is clearly to the right of the first character's
+            // leading edge, the offset-0 is a false result — discard it.
+            if (charRect.width > 0 && e.clientX > charRect.left + charRect.width * 0.5) {
+              rawOffset = null
+            }
+          }
+          if (rawOffset !== null) clickOffset = rawOffset
+        }
+      } catch {}
+      handleTextClick(clickOffset)
+    }
   }
 
   return (
@@ -113,6 +173,7 @@ export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onText
       ref={itemRef}
       className={[
         styles.item,
+        'taskRow',
         effectiveCompleting ? styles.completing : '',
         holding ? styles.holding : '',
         isBeingDragged ? styles.dragging : '',
@@ -151,11 +212,9 @@ export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onText
         )}
       </div>
 
-      {task.priority && (
-        <div className={styles.priorityWrap}>
-          <PriorityBadge priority={task.priority} onChange={(p) => onPriorityChange(task, p)} />
-        </div>
-      )}
+      <div className={styles.priorityWrap}>
+        <PriorityBadge priority={task.priority ?? null} onChange={(p) => onPriorityChange(task, p)} />
+      </div>
     </div>
   )
 }

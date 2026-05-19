@@ -1,4 +1,4 @@
-import { useRef, useEffect, forwardRef, useCallback, useImperativeHandle } from 'react'
+import { useState, useRef, useEffect, forwardRef, useCallback, useImperativeHandle } from 'react'
 import styles from './Blob.module.css'
 
 // Walk up the DOM to find the nearest contenteditable ancestor (or self)
@@ -9,6 +9,19 @@ function getContentEditable(node) {
     n = n.parentElement
   }
   return null
+}
+
+// Returns true if the cursor (collapsed selection) is at the very start of el
+function isCursorAtStart(el) {
+  try {
+    const sel = window.getSelection()
+    if (!sel?.isCollapsed || !sel.rangeCount) return false
+    const range = sel.getRangeAt(0)
+    const testRange = document.createRange()
+    testRange.selectNodeContents(el)
+    testRange.collapse(true)
+    return range.compareBoundaryPoints(Range.START_TO_START, testRange) === 0
+  } catch { return false }
 }
 
 export function makeId() {
@@ -23,9 +36,13 @@ export function makeCheckLine(content = '') {
   return { id: makeId(), type: 'check', content, checked: false }
 }
 
-// Single contenteditable line — plain text or checklist item
+export function makeBulletLine(content = '') {
+  return { id: makeId(), type: 'bullet', content }
+}
+
+// Single contenteditable line — plain text, bullet, or checklist item
 const BlobLine = forwardRef(function BlobLine(
-  { line, isFirst, onChange, onKeyDown, onToggleCheck, onFocus },
+  { line, isFirst, isSelected, onChange, onKeyDown, onToggleCheck, onFocus },
   fwdRef
 ) {
   const innerRef = useRef(null)
@@ -48,8 +65,7 @@ const BlobLine = forwardRef(function BlobLine(
   // Sync when content is changed externally (e.g. preSortLines restore)
   useEffect(() => {
     const el = innerRef.current
-    if (!el) return
-    if (line.content === syncedRef.current) return
+    if (!el || line.content === syncedRef.current) return
     syncedRef.current = line.content
     el.innerHTML = line.content || ''
     el.dataset.empty = !line.content || line.content === '<br>' ? 'true' : 'false'
@@ -57,7 +73,6 @@ const BlobLine = forwardRef(function BlobLine(
 
   const handleInput = useCallback((e) => {
     const html = e.currentTarget.innerHTML
-    // Normalise: treat bare <br> as empty
     const normalised = html === '<br>' || html === '<br/>' ? '' : html
     syncedRef.current = normalised
     e.currentTarget.dataset.empty = normalised === '' ? 'true' : 'false'
@@ -65,7 +80,7 @@ const BlobLine = forwardRef(function BlobLine(
   }, [onChange])
 
   return (
-    <div className={styles.line}>
+    <div className={`${styles.line} ${isSelected ? styles.lineSelected : ''}`}>
       {line.type === 'check' && (
         <button
           className={`${styles.square} ${line.checked ? styles.squareChecked : ''}`}
@@ -73,6 +88,9 @@ const BlobLine = forwardRef(function BlobLine(
           aria-label={line.checked ? 'Uncheck' : 'Check'}
           tabIndex={-1}
         />
+      )}
+      {line.type === 'bullet' && (
+        <span className={styles.bullet} aria-hidden="true">•</span>
       )}
       <div
         ref={setRef}
@@ -83,8 +101,6 @@ const BlobLine = forwardRef(function BlobLine(
         onKeyDown={onKeyDown}
         onFocus={onFocus}
         onBlur={(e) => {
-          // Snapshot the selection so format() can restore it after focus is lost
-          // (iOS tapping a toolbar button blurs the contenteditable before the press fires)
           const sel = window.getSelection()
           if (sel?.rangeCount > 0) e.currentTarget._savedRange = sel.getRangeAt(0).cloneRange()
         }}
@@ -94,119 +110,221 @@ const BlobLine = forwardRef(function BlobLine(
   )
 })
 
-export const Blob = forwardRef(function Blob({ lines, onChange, disabled, collapsed }, ref) {
+export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDelete, disabled, collapsed }, ref) {
   const inputRefs = useRef([])
   const focusedIdx = useRef(0)
+  const blobContainerRef = useRef(null)           // direct DOM ref for class toggling
+  const [lineSel, setLineSel] = useState(null)    // { anchor, focus } | null
+  const dragAnchorRef = useRef(null)              // { idx, active }
+  const skipNextFocusClearRef = useRef(false)     // suppress focus-based clear during Shift+Arrow
+
+  const clearLineSel = useCallback(() => setLineSel(null), [])
+
+  // ── Helpers ─────────────────────────────────────────────────────────
+
+  const getLineIdxFromY = useCallback((y) => {
+    const refs = inputRefs.current
+    for (let i = 0; i < refs.length; i++) {
+      const el = refs[i]
+      if (!el) continue
+      const rect = el.getBoundingClientRect()
+      // Extend each line's hit zone by 8px above/below to cover inter-line gaps
+      if (y >= rect.top - 8 && y <= rect.bottom + 8) return i
+    }
+    // Clamp to first / last
+    if (refs[0] && y < refs[0].getBoundingClientRect().top) return 0
+    const last = refs.filter(Boolean).length - 1
+    return last >= 0 ? last : 0
+  }, [])
+
+  // ── Container pointer events for cross-line drag selection ──────────
+
+  const handleBlobPointerDown = useCallback((e) => {
+    if (e.button !== 0) return
+    dragAnchorRef.current = { idx: getLineIdxFromY(e.clientY), active: false }
+  }, [getLineIdxFromY])
+
+  const handleBlobPointerMove = useCallback((e) => {
+    if (!(e.buttons & 1) || !dragAnchorRef.current) return
+    const curIdx = getLineIdxFromY(e.clientY)
+    if (curIdx !== dragAnchorRef.current.idx || dragAnchorRef.current.active) {
+      if (!dragAnchorRef.current.active) {
+        dragAnchorRef.current.active = true
+        // Apply user-select:none only while drag is in progress (via direct DOM —
+        // avoids React re-render and prevents the class from blocking post-drag clicks)
+        blobContainerRef.current?.classList.add(styles.blobSelecting)
+      }
+      setLineSel({ anchor: dragAnchorRef.current.idx, focus: curIdx })
+      try { window.getSelection().removeAllRanges() } catch {}
+    }
+  }, [getLineIdxFromY])
+
+  const handleBlobPointerUp = useCallback(() => {
+    // Remove user-select:none regardless of whether it was a drag
+    blobContainerRef.current?.classList.remove(styles.blobSelecting)
+    // Plain click (no cross-line drag) → clear selection
+    if (dragAnchorRef.current && !dragAnchorRef.current.active) {
+      clearLineSel()
+    }
+    dragAnchorRef.current = null
+  }, [clearLineSel])
+
+  // ── Per-line key handler ─────────────────────────────────────────────
 
   const handleChange = useCallback((idx, content) => {
     onChange(lines.map((l, i) => i === idx ? { ...l, content } : l))
   }, [lines, onChange])
 
   const handleKeyDown = useCallback((idx, e) => {
-    // Cross-line selection delete: Backspace or Delete with a selection spanning multiple lines
+    // Escape: clear multi-line selection
+    if (e.key === 'Escape' && lineSel) {
+      e.preventDefault()
+      clearLineSel()
+      return
+    }
+
+    // Shift+Arrow: extend multi-line selection
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.shiftKey) {
+      const atEdge = e.key === 'ArrowUp' ? isCursorAtStart(e.currentTarget) : true
+      if (lineSel || atEdge) {
+        e.preventDefault()
+        const anchor = lineSel ? lineSel.anchor : idx
+        const prevFocus = lineSel ? lineSel.focus : idx
+        const nextFocus = e.key === 'ArrowUp'
+          ? Math.max(0, prevFocus - 1)
+          : Math.min(lines.length - 1, prevFocus + 1)
+        skipNextFocusClearRef.current = true   // focus move must not clear selection
+        setLineSel({ anchor, focus: nextFocus })
+        setTimeout(() => inputRefs.current[nextFocus]?.focus(), 0)
+        return
+      }
+    }
+
+    // Backspace / Delete
     if (e.key === 'Backspace' || e.key === 'Delete') {
+      // 1. Multi-line selection delete
+      if (lineSel) {
+        e.preventDefault()
+        onBeforeLineDelete?.(lines)   // snapshot for undo before mutating
+        const lo = Math.min(lineSel.anchor, lineSel.focus)
+        const hi = Math.max(lineSel.anchor, lineSel.focus)
+        const kept = lines.filter((_, i) => i < lo || i > hi)
+        onChange(kept.length > 0 ? kept : [makeTextLine('')])
+        clearLineSel()
+        setTimeout(() => inputRefs.current[Math.max(0, lo - 1)]?.focus(), 0)
+        return
+      }
+
+      // 2. Cross-line browser selection (rare but handle it)
       const sel = window.getSelection()
       if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0)
         const anchorCE = getContentEditable(sel.anchorNode)
-        const focusCE = getContentEditable(sel.focusNode)
+        const focusCE  = getContentEditable(sel.focusNode)
         if (anchorCE && focusCE && anchorCE !== focusCE) {
           e.preventDefault()
           const allCEs = inputRefs.current
-          const anchorLineIdx = allCEs.indexOf(anchorCE)
-          const focusLineIdx = allCEs.indexOf(focusCE)
-          if (anchorLineIdx === -1 || focusLineIdx === -1) return
-          const loIdx = Math.min(anchorLineIdx, focusLineIdx)
-          const hiIdx = Math.max(anchorLineIdx, focusLineIdx)
-          const loCE = allCEs[loIdx]
-          const hiCE = allCEs[hiIdx]
+          const aIdx = allCEs.indexOf(anchorCE)
+          const fIdx = allCEs.indexOf(focusCE)
+          if (aIdx === -1 || fIdx === -1) return
+          const loIdx = Math.min(aIdx, fIdx)
+          const hiIdx = Math.max(aIdx, fIdx)
+          const loCE  = allCEs[loIdx]
+          const hiCE  = allCEs[hiIdx]
 
-          // Content before selection start (in loCE)
           const preRange = document.createRange()
           preRange.setStart(loCE, 0)
           preRange.setEnd(range.startContainer, range.startOffset)
           const preDiv = document.createElement('div')
           preDiv.appendChild(preRange.cloneContents())
-          const preHtml = preDiv.innerHTML
+          const preHtml    = preDiv.innerHTML
           const preTextLen = preDiv.textContent.length
 
-          // Content after selection end (in hiCE)
           const postRange = document.createRange()
           postRange.setStart(range.endContainer, range.endOffset)
-          if (hiCE.childNodes.length > 0) {
-            postRange.setEnd(hiCE, hiCE.childNodes.length)
-          } else {
-            postRange.setEnd(hiCE, 0)
-          }
+          postRange.setEnd(hiCE, hiCE.childNodes.length || 0)
           const postDiv = document.createElement('div')
           postDiv.appendChild(postRange.cloneContents())
           const postHtml = postDiv.innerHTML
 
           const merged = preHtml + postHtml
           const cleanMerged = merged === '<br>' || merged === '<br/>' ? '' : merged
+          onChange([...lines.slice(0, loIdx), { ...lines[loIdx], content: cleanMerged }, ...lines.slice(hiIdx + 1)])
 
-          const newLines = [
-            ...lines.slice(0, loIdx),
-            { ...lines[loIdx], content: cleanMerged },
-            ...lines.slice(hiIdx + 1),
-          ]
-          onChange(newLines)
-
-          // Place cursor at merge point after re-render
           setTimeout(() => {
             const targetEl = inputRefs.current[loIdx]
             if (!targetEl) return
             targetEl.focus()
             try {
               const sel2 = window.getSelection()
-              const r = document.createRange()
+              const r    = document.createRange()
               const walker = document.createTreeWalker(targetEl, NodeFilter.SHOW_TEXT, null, false)
-              let remaining = preTextLen
-              let placed = false
-              let node
+              let remaining = preTextLen, placed = false, node
               while ((node = walker.nextNode())) {
                 if (remaining <= node.textContent.length) {
-                  r.setStart(node, remaining)
-                  r.collapse(true)
-                  sel2.removeAllRanges()
-                  sel2.addRange(r)
-                  placed = true
-                  break
+                  r.setStart(node, remaining); r.collapse(true)
+                  sel2.removeAllRanges(); sel2.addRange(r)
+                  placed = true; break
                 }
                 remaining -= node.textContent.length
               }
-              if (!placed) {
-                r.selectNodeContents(targetEl)
-                r.collapse(false)
-                sel2.removeAllRanges()
-                sel2.addRange(r)
-              }
+              if (!placed) { r.selectNodeContents(targetEl); r.collapse(false); sel2.removeAllRanges(); sel2.addRange(r) }
             } catch {}
           }, 0)
           return
         }
       }
+
+      // 3. Backspace at start of non-empty bullet/check → convert to plain text
+      if (e.key === 'Backspace') {
+        const cur = lines[idx]
+        const hasContent = !!e.currentTarget.textContent?.trim()
+        if (hasContent && (cur.type === 'check' || cur.type === 'bullet') && isCursorAtStart(e.currentTarget)) {
+          e.preventDefault()
+          onChange(lines.map((l, i) => i === idx ? { ...l, type: 'text' } : l))
+          setTimeout(() => {
+            const el = inputRefs.current[idx]
+            if (!el) return
+            el.focus()
+            try {
+              const s = window.getSelection(); const r = document.createRange()
+              r.selectNodeContents(el); r.collapse(true)
+              s.removeAllRanges(); s.addRange(r)
+            } catch {}
+          }, 0)
+          return
+        }
+
+        // 4. Empty line → remove it
+        if (!hasContent && lines.length > 1) {
+          e.preventDefault()
+          onChange(lines.filter((_, i) => i !== idx))
+          setTimeout(() => inputRefs.current[Math.max(0, idx - 1)]?.focus(), 0)
+          return
+        }
+      }
+    }
+
+    // Clear multi-line selection on any normal (non-modifier) key
+    if (lineSel && !e.shiftKey && !['Shift', 'Meta', 'Control', 'Alt'].includes(e.key)) {
+      clearLineSel()
     }
 
     if (e.key === 'Enter') {
       e.preventDefault()
       const cur = lines[idx]
-      // Empty check-line at the end → escape back to text mode
-      if (cur.type === 'check' && !e.currentTarget.textContent?.trim() && idx === lines.length - 1) {
+      const isEmpty = !e.currentTarget.textContent?.trim()
+      if ((cur.type === 'check' || cur.type === 'bullet') && isEmpty && idx === lines.length - 1) {
         onChange(lines.map((l, i) => i === idx ? { ...l, type: 'text' } : l))
         return
       }
-      const newLine = cur.type === 'check' ? makeCheckLine() : makeTextLine()
-      const updated = [...lines.slice(0, idx + 1), newLine, ...lines.slice(idx + 1)]
-      onChange(updated)
+      const newLine = cur.type === 'check'  ? makeCheckLine()
+                    : cur.type === 'bullet' ? makeBulletLine()
+                    : makeTextLine()
+      onChange([...lines.slice(0, idx + 1), newLine, ...lines.slice(idx + 1)])
       setTimeout(() => inputRefs.current[idx + 1]?.focus(), 0)
     }
-    if (e.key === 'Backspace' && !e.currentTarget.textContent?.trim() && lines.length > 1) {
-      e.preventDefault()
-      onChange(lines.filter((_, i) => i !== idx))
-      setTimeout(() => inputRefs.current[Math.max(0, idx - 1)]?.focus(), 0)
-    }
-  }, [lines, onChange])
+  }, [lines, onChange, lineSel, clearLineSel])
 
   const handleToggleCheck = useCallback((idx) => {
     onChange(lines.map((l, i) => i === idx ? { ...l, checked: !l.checked } : l))
@@ -225,23 +343,42 @@ export const Blob = forwardRef(function Blob({ lines, onChange, disabled, collap
       onChange(lines.map((l, i) =>
         i === idx ? { ...l, type: l.type === 'check' ? 'text' : 'check', checked: false } : l
       ))
+      setTimeout(() => inputRefs.current[idx]?.focus(), 0)
     },
 
-    // Rich-text formatting via execCommand.
-    // Re-focuses the last active line and restores any saved selection range before applying,
-    // which handles iOS's tendency to blur the contenteditable when toolbar buttons are tapped.
+    toggleBullet() {
+      const idx = focusedIdx.current
+      const cur = lines[idx]
+      if (!cur) {
+        const newLine = makeBulletLine()
+        onChange([...lines, newLine])
+        setTimeout(() => inputRefs.current[lines.length]?.focus(), 0)
+        return
+      }
+      onChange(lines.map((l, i) =>
+        i === idx ? { ...l, type: l.type === 'bullet' ? 'text' : 'bullet' } : l
+      ))
+      setTimeout(() => inputRefs.current[idx]?.focus(), 0)
+    },
+
     format(type) {
       const el = inputRefs.current[focusedIdx.current]
-      if (el) {
-        el.focus()
-        if (el._savedRange) {
-          const sel = window.getSelection()
-          sel.removeAllRanges()
-          sel.addRange(el._savedRange)
-          el._savedRange = null
-        }
+      if (!el) return
+      el.focus()
+      if (el._savedRange) {
+        const sel = window.getSelection()
+        sel.removeAllRanges()
+        sel.addRange(el._savedRange)
+        el._savedRange = null
       }
+      const prevHTML = el.innerHTML
+      const sel = window.getSelection()
+      const wasCollapsed = !sel || sel.isCollapsed
       document.execCommand(type, false, null)
+      if (wasCollapsed && el.innerHTML === prevHTML) {
+        document.execCommand('insertText', false, '​')
+      }
+      el.dispatchEvent(new InputEvent('input', { bubbles: true }))
     },
 
     queryFormat(type) {
@@ -256,27 +393,46 @@ export const Blob = forwardRef(function Blob({ lines, onChange, disabled, collap
   }), [lines, onChange])
 
   const handleContainerClick = useCallback((e) => {
-    // Clicks on the blob padding (not on a line element) → focus last line
     if (e.target === e.currentTarget) {
       inputRefs.current[lines.length - 1]?.focus()
     }
   }, [lines.length])
 
+  const selLo = lineSel ? Math.min(lineSel.anchor, lineSel.focus) : -1
+  const selHi = lineSel ? Math.max(lineSel.anchor, lineSel.focus) : -1
+
   return (
     <div
+      ref={blobContainerRef}
       className={`${styles.blob} ${disabled ? styles.disabled : ''} ${collapsed ? styles.collapsed : ''}`}
       onClick={handleContainerClick}
+      onPointerDown={handleBlobPointerDown}
+      onPointerMove={handleBlobPointerMove}
+      onPointerUp={handleBlobPointerUp}
+      onPointerLeave={handleBlobPointerUp}
     >
       {lines.map((line, idx) => (
         <BlobLine
           key={line.id}
-          ref={el => { inputRefs.current[idx] = el }}
+          ref={el => {
+            inputRefs.current[idx] = el
+            // Also store wrapper via a data attribute lookup — wrapped in a callback below
+          }}
           line={line}
           isFirst={idx === 0}
+          isSelected={idx >= selLo && idx <= selHi}
           onChange={(content) => handleChange(idx, content)}
           onKeyDown={(e) => handleKeyDown(idx, e)}
           onToggleCheck={() => handleToggleCheck(idx)}
-          onFocus={() => { focusedIdx.current = idx }}
+          onFocus={() => {
+            focusedIdx.current = idx
+            // Keyboard navigation (Tab, etc.) clears selection.
+            // Mouse clicks are handled by pointerUp; Shift+Arrow is suppressed via skip flag.
+            if (lineSel && !skipNextFocusClearRef.current && !dragAnchorRef.current) {
+              clearLineSel()
+            }
+            skipNextFocusClearRef.current = false
+          }}
         />
       ))}
     </div>

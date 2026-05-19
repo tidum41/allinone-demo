@@ -1,15 +1,26 @@
 import styles from './PriorityBadge.module.css'
 
-const CYCLE = ['Urgent', 'Soon', 'Eventually']
+// Cycles: null → Urgent → Soon → Eventually → null
+const CYCLE = [null, 'Urgent', 'Soon', 'Eventually']
 
 export function PriorityBadge({ priority, onChange }) {
-  if (!priority) return null
-
   const handleClick = (e) => {
     e.stopPropagation()
     const idx = CYCLE.indexOf(priority)
     const next = CYCLE[(idx + 1) % CYCLE.length]
     onChange(next)
+  }
+
+  if (!priority) {
+    return (
+      <button
+        className={styles.badgeEmpty}
+        onClick={handleClick}
+        aria-label="Add priority"
+      >
+        +
+      </button>
+    )
   }
 
   return (

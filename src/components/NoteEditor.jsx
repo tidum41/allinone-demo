@@ -3,11 +3,24 @@ import { Blob, makeTextLine } from './Blob'
 import { ArchiveView } from './ArchiveView'
 import styles from './NoteEditor.module.css'
 
+// Matches the empty-square icon used in the main MenuBar
 function ChecklistIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
       <rect x="1" y="1" width="16" height="16" rx="3.5" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M4.5 9.5l3 3 6-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function BulletIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+      <circle cx="3" cy="5" r="1.5" fill="currentColor"/>
+      <line x1="7" y1="5" x2="17" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="3" cy="10" r="1.5" fill="currentColor"/>
+      <line x1="7" y1="10" x2="17" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="3" cy="15" r="1.5" fill="currentColor"/>
+      <line x1="7" y1="15" x2="17" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -34,37 +47,41 @@ function parseNoteLines(body) {
   if (!body) return [makeTextLine('')]
   try {
     const parsed = JSON.parse(body)
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    if (Array.isArray(parsed)) return parsed.length > 0 ? parsed : [makeTextLine('')]
   } catch {}
   return body.split('\n').map(makeTextLine)
 }
 
-export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen }) {
+export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen, isSidebarOpen }) {
   const [title, setTitle] = useState(note?.title || '')
   const [lines, setLines] = useState(() => parseNoteLines(note?.body || ''))
   const [formatOpen, setFormatOpen] = useState(false)
   const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false })
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
   const debounceRef = useRef(null)
   const noteIdRef = useRef(note?.id || null)
   const blobRef = useRef(null)
   const aaRef = useRef(null)
+  const deleteWrapRef = useRef(null)
+  const deleteConfirmTimerRef = useRef(null)
 
   const isArchive = note?.title?.toLowerCase() === 'completed archive'
 
+  const refreshFormats = useCallback(() => {
+    try {
+      setActiveFormats({
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+      })
+    } catch {}
+  }, [])
+
   // Track active formats at cursor position
   useEffect(() => {
-    const handler = () => {
-      try {
-        setActiveFormats({
-          bold: document.queryCommandState('bold'),
-          italic: document.queryCommandState('italic'),
-          underline: document.queryCommandState('underline'),
-        })
-      } catch {}
-    }
-    document.addEventListener('selectionchange', handler)
-    return () => document.removeEventListener('selectionchange', handler)
-  }, [])
+    document.addEventListener('selectionchange', refreshFormats)
+    return () => document.removeEventListener('selectionchange', refreshFormats)
+  }, [refreshFormats])
 
   // Close format popover on outside click
   useEffect(() => {
@@ -79,6 +96,24 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen }) {
       document.removeEventListener('touchstart', handler)
     }
   }, [formatOpen])
+
+  // Auto-reset delete confirm on outside click or after 4s
+  useEffect(() => {
+    if (!deleteConfirm) return
+    const handler = (e) => {
+      if (deleteWrapRef.current && !deleteWrapRef.current.contains(e.target)) {
+        setDeleteConfirm(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler, { passive: true })
+    deleteConfirmTimerRef.current = setTimeout(() => setDeleteConfirm(false), 4000)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+      clearTimeout(deleteConfirmTimerRef.current)
+    }
+  }, [deleteConfirm])
 
   const hasActiveFormat = activeFormats.bold || activeFormats.italic || activeFormats.underline
   const aaActive = formatOpen || hasActiveFormat
@@ -101,19 +136,24 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen }) {
     save(title, newLines)
   }
 
-  const handleDelete = () => {
+  const handleDeletePress = () => {
+    setDeleteConfirm(v => !v)
+  }
+
+  const handleDeleteConfirm = () => {
     if (noteIdRef.current) onDelete(noteIdRef.current)
     onBack()
   }
 
   const applyFormat = (type) => {
     blobRef.current?.format(type)
+    requestAnimationFrame(refreshFormats)
   }
 
   return (
     <div className={styles.wrap}>
       <header className={styles.menuBar}>
-        <button className={styles.backBtn} onClick={onSidebarOpen} aria-label="Open notes">
+        <button className={`${styles.backBtn} ${isSidebarOpen ? styles.backBtnActive : ''}`} onClick={onSidebarOpen} aria-label="Open notes">
           <SidebarIcon />
         </button>
 
@@ -150,22 +190,22 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen }) {
                     <b>B</b>
                   </button>
                   <button
-                    className={`${styles.formatBtn} ${styles.fmtItalic} ${activeFormats.italic ? styles.formatBtnOn : ''}`}
+                    className={`${styles.formatBtn} ${activeFormats.italic ? styles.formatBtnOn : ''}`}
                     onMouseDown={e => { e.preventDefault(); applyFormat('italic') }}
                     onTouchStart={e => e.preventDefault()}
                     onTouchEnd={e => { e.preventDefault(); applyFormat('italic') }}
                     aria-label="Italic"
                   >
-                    <i>I</i>
+                    <span className={styles.fmtItalicLabel}>I</span>
                   </button>
                   <button
-                    className={`${styles.formatBtn} ${styles.fmtUnderline} ${activeFormats.underline ? styles.formatBtnOn : ''}`}
+                    className={`${styles.formatBtn} ${activeFormats.underline ? styles.formatBtnOn : ''}`}
                     onMouseDown={e => { e.preventDefault(); applyFormat('underline') }}
                     onTouchStart={e => e.preventDefault()}
                     onTouchEnd={e => { e.preventDefault(); applyFormat('underline') }}
                     aria-label="Underline"
                   >
-                    <u>U</u>
+                    <span className={styles.fmtUnderlineLabel}>U</span>
                   </button>
                 </div>
               )}
@@ -174,6 +214,17 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen }) {
           {!isArchive && (
             <button
               className={styles.iconBtn}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => blobRef.current?.toggleBullet()}
+              aria-label="Toggle bullet"
+            >
+              <BulletIcon />
+            </button>
+          )}
+          {!isArchive && (
+            <button
+              className={styles.iconBtn}
+              onMouseDown={e => e.preventDefault()}
               onClick={() => blobRef.current?.toggleChecklist()}
               aria-label="Toggle checklist"
             >
@@ -182,12 +233,32 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen }) {
           )}
           <button
             className={styles.iconBtn}
-            onClick={() => document.execCommand('undo')}
+            onClick={() => { const el = blobRef.current; if (el?.undo) el.undo(); else document.execCommand('undo') }}
             aria-label="Undo"
           >
             <UndoIcon />
           </button>
-          <button className={styles.deleteBtn} onClick={handleDelete}>delete</button>
+          <div ref={deleteWrapRef} className={styles.deleteWrap}>
+            {deleteConfirm && (
+              <div className={styles.deletePopover}>
+                <span className={styles.deletePopoverLabel}>delete note?</span>
+                <button
+                  className={styles.deletePopoverConfirm}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={handleDeleteConfirm}
+                >
+                  confirm
+                </button>
+              </div>
+            )}
+            <button
+              className={`${styles.deleteBtn} ${deleteConfirm ? styles.deleteBtnActive : ''}`}
+              onMouseDown={e => e.preventDefault()}
+              onClick={handleDeletePress}
+            >
+              delete
+            </button>
+          </div>
         </div>
       </header>
 

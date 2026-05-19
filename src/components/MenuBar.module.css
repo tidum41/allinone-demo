@@ -9,6 +9,8 @@
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
   gap: var(--space-xs);
+  user-select: none;
+  cursor: default;
 }
 
 /* Sidebar toggle — flush left */
@@ -22,7 +24,9 @@
   flex-shrink: 0;
 }
 
-.sidebarBtn:active {
+.sidebarBtn:hover,
+.sidebarBtn:active,
+.sidebarBtnActive {
   color: var(--color-text-primary);
 }
 
@@ -48,15 +52,14 @@
   justify-content: center;
   color: var(--color-text-secondary);
   transition: color var(--transition-fast);
+  cursor: pointer;
 }
 
+.iconBtn:hover,
 .iconBtn:active {
   color: var(--color-text-primary);
 }
 
-.iconBtnDim {
-  opacity: 0.3;
-}
 
 .iconBtnActive {
   color: var(--color-text-primary);
@@ -76,6 +79,11 @@
   position: relative;
 }
 
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* Floating format popover */
 .formatPopover {
   position: absolute;
@@ -89,6 +97,7 @@
   padding: 4px;
   z-index: 20;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  animation: popoverIn 130ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 
 .formatBtn {
@@ -115,8 +124,8 @@
   color: var(--color-text-primary);
 }
 
-.fmtItalic { font-style: italic; }
-.fmtUnderline { text-decoration: underline; }
+.fmtItalicLabel { font-style: italic; }
+.fmtUnderlineLabel { text-decoration: underline; }
 
 .divider {
   width: 1px;
@@ -155,6 +164,10 @@
   transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 120ms ease;
   position: relative;
   overflow: hidden;
+}
+
+.sortBtn:hover:not(:disabled) {
+  opacity: 0.88;
 }
 
 .sortBtn:active:not(:disabled) {

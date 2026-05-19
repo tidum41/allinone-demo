@@ -19,7 +19,7 @@
 
 /* 1. Checkbox fills and bounces */
 @keyframes checkFill {
-  0%   { background: transparent; border-color: #C0C0C0; transform: scale(1); }
+  0%   { background: transparent; border-color: var(--color-border); transform: scale(1); }
   45%  { background: var(--color-text-secondary); border-color: var(--color-text-secondary); transform: scale(1.2); }
   70%  { transform: scale(0.92); }
   100% { background: var(--color-text-secondary); border-color: var(--color-text-secondary); transform: scale(1); }
@@ -106,7 +106,7 @@
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  border: 1.5px solid #C0C0C0;
+  border: 1.5px solid var(--color-border);
   background: transparent;
   transition: background var(--transition-fast), border-color var(--transition-fast);
   flex-shrink: 0;

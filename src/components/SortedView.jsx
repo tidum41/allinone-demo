@@ -19,7 +19,7 @@ function formatLastSorted(iso) {
   return `sorted ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
 }
 
-export function SortedView({ tasks, completingItems = {}, onComplete, onPriorityChange, onCategoryChange, onTextChange, completedTasks, onUncheck }) {
+export function SortedView({ tasks, completingItems = {}, onComplete, onPriorityChange, onCategoryChange, onTextChange, onAddAfter, newTaskId, completedTasks, onUncheck, completedSectionRef }) {
   const completingTaskIds = new Set(Object.keys(completingItems))
 
   const grouped = CATEGORY_ORDER.reduce((acc, cat) => {
@@ -151,6 +151,8 @@ export function SortedView({ tasks, completingItems = {}, onComplete, onPriority
             onPriorityChange={onPriorityChange}
             onCategoryChange={onCategoryChange}
             onTextChange={onTextChange}
+            onAddAfter={onAddAfter}
+            newTaskId={newTaskId}
             sectionRef={el => { sectionRefs.current[cat] = el }}
             isDragTarget={dropTarget === cat}
             draggingTaskId={draggingTaskId}
@@ -158,7 +160,7 @@ export function SortedView({ tasks, completingItems = {}, onComplete, onPriority
           />
         ) : null
       )}
-      <CompletedSection tasks={completedTasks} onUncheck={onUncheck} />
+      <CompletedSection ref={completedSectionRef} tasks={completedTasks} onUncheck={onUncheck} />
       {lastSortedLabel && (
         <p className={styles.sortedAt}>{lastSortedLabel}</p>
       )}

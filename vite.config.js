@@ -23,5 +23,14 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}']
       }
     })
-  ]
+  ],
+  server: {
+    proxy: {
+      // Forwards /api/* to the local dev API server (run alongside: node dev-api.js)
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      }
+    }
+  }
 })

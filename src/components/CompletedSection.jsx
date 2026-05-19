@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useState, forwardRef, useImperativeHandle } from 'react'
 import styles from './CompletedSection.module.css'
 
-export function CompletedSection({ tasks = [], onUncheck }) {
+export const CompletedSection = forwardRef(function CompletedSection({ tasks = [], onUncheck }, ref) {
   const [isOpen, setIsOpen] = useState(() => {
     const saved = localStorage.getItem('cat-open-completed')
     return saved === null ? false : saved === 'true'
   })
+
+  useImperativeHandle(ref, () => ({
+    expand() {
+      setIsOpen(true)
+      localStorage.setItem('cat-open-completed', 'true')
+    }
+  }), [])
 
   const toggle = () => setIsOpen(v => {
     const next = !v
@@ -29,7 +36,7 @@ export function CompletedSection({ tasks = [], onUncheck }) {
       <div className={`${styles.tasksWrap} ${isOpen ? styles.tasksOpen : ''}`}>
         <div className={styles.tasksInner}>
           {[...tasks].reverse().map((task, i) => (
-            <div key={task.id || i} className={styles.item}>
+            <div key={task.id || i} className={styles.item} style={i === 0 ? undefined : { animation: 'none' }}>
               <button
                 className={styles.checkbox}
                 onClick={() => onUncheck(task)}
@@ -51,4 +58,4 @@ export function CompletedSection({ tasks = [], onUncheck }) {
       </div>
     </section>
   )
-}
+})

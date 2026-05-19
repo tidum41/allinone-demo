@@ -1,6 +1,7 @@
 .blob {
   padding: var(--space-md) var(--space-md) var(--space-sm);
   min-height: 22vh;
+  cursor: text;
 }
 
 .blob.disabled {
@@ -8,11 +9,23 @@
   pointer-events: none;
 }
 
+/* Suppress native text-selection highlight while our custom line-selection is active */
+.blobSelecting,
+.blobSelecting * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
 .line {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   min-height: 32px;
+  cursor: text;
+}
+
+.lineSelected {
+  background: var(--color-surface);
 }
 
 .lineInput {
@@ -44,11 +57,22 @@
   color: var(--color-text-placeholder);
 }
 
+.bullet {
+  font-size: 17px;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  user-select: none;
+  width: 16px;
+  text-align: center;
+  margin-top: 3px;
+}
+
 .square {
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  border: 1.5px solid #C0C0C0;
+  border: 1.5px solid var(--color-border);
   background: transparent;
   flex-shrink: 0;
   margin-top: 5px;

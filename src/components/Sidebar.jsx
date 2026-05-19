@@ -6,11 +6,16 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function HalfCircleIcon() {
+function MoonIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M8 2.5A5.5 5.5 0 0 0 8 13.5Z" fill="currentColor"/>
+      <path
+        d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6 6 0 1 0 8 8z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -69,7 +74,6 @@ export function Sidebar({ open, onClose, notes, onSelectNote, onCreate, onSelect
                   onClick={() => { onSelectNote(note); onClose() }}
                 >
                   <span className={styles.noteTitle}>{note.title || 'untitled'}</span>
-                  <span className={styles.noteDate}>{formatDate(note.updatedAt)}</span>
                 </button>
               ))
             )}
@@ -86,7 +90,7 @@ export function Sidebar({ open, onClose, notes, onSelectNote, onCreate, onSelect
           </button>
 
           <button className={styles.themeBtn} onClick={toggleTheme} aria-label="Toggle dark mode">
-            {isDark ? <SunIcon /> : <HalfCircleIcon />}
+            {isDark ? <SunIcon /> : <MoonIcon />}
           </button>
         </div>
       </nav>

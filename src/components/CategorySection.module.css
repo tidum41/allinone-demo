@@ -25,6 +25,10 @@
   transition: opacity 100ms ease;
 }
 
+.header:hover {
+  opacity: 0.75;
+}
+
 .header:active {
   opacity: 0.55;
 }
