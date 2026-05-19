@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { Agentation } from 'agentation'
 import { useSession } from './hooks/useSession'
 import { categorizeTasks } from './lib/groq'
 import { MenuBar } from './components/MenuBar'
@@ -437,6 +438,7 @@ export default function App() {
 
       </div>
       </div>
+      {import.meta.env.DEV && <Agentation />}
     </div>
   )
 }
