@@ -87,6 +87,7 @@ const BlobLine = forwardRef(function BlobLine(
           onClick={onToggleCheck}
           aria-label={line.checked ? 'Uncheck' : 'Check'}
           tabIndex={-1}
+          onPointerDown={e => e.currentTarget.releasePointerCapture(e.pointerId)}
         />
       )}
       {line.type === 'bullet' && (
@@ -275,11 +276,11 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
         }
       }
 
-      // 3. Backspace at start of non-empty bullet/check → convert to plain text
+      // 3. Backspace at start of bullet/check → convert to plain text (empty or not)
       if (e.key === 'Backspace') {
         const cur = lines[idx]
         const hasContent = !!e.currentTarget.textContent?.trim()
-        if (hasContent && (cur.type === 'check' || cur.type === 'bullet') && isCursorAtStart(e.currentTarget)) {
+        if ((cur.type === 'check' || cur.type === 'bullet') && isCursorAtStart(e.currentTarget)) {
           e.preventDefault()
           onChange(lines.map((l, i) => i === idx ? { ...l, type: 'text' } : l))
           setTimeout(() => {

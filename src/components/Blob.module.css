@@ -63,6 +63,7 @@
   color: var(--color-text-secondary);
   flex-shrink: 0;
   user-select: none;
+  pointer-events: none;
   width: 16px;
   text-align: center;
   margin-top: 3px;

@@ -6,7 +6,7 @@ const LONG_PRESS_MS = 1000
 const MOVE_THRESHOLD = 8   // px before long-press is cancelled
 const HOLDING_FEEDBACK_MS = 80 // how soon the charging cue appears
 
-export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onTextChange, onAddAfter, onDragReady, isBeingDragged, isCompleting, autoFocus, isSelected }) {
+export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onTextChange, onAddAfter, onDeleteSelf, onDragReady, isBeingDragged, isCompleting, autoFocus, isSelected }) {
   const [completing, setCompleting] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(task.text)
@@ -119,6 +119,13 @@ export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onText
       e.preventDefault()
       textareaRef.current?.blur()   // save current task first
       onAddAfter?.(task)
+    }
+    if (e.key === 'Backspace'
+        && textareaRef.current?.selectionStart === 0
+        && textareaRef.current?.selectionEnd === 0) {
+      e.preventDefault()
+      textareaRef.current.blur()
+      onDeleteSelf?.()
     }
   }
 

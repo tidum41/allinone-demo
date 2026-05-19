@@ -145,6 +145,7 @@ export function CategorySection({
                 onCategoryChange={onCategoryChange}
                 onTextChange={onTextChange}
                 onAddAfter={onAddAfter}
+                onDeleteSelf={() => onDeleteSelected?.([task.id])}
                 onDragReady={onDragReady}
                 isBeingDragged={task.id === draggingTaskId}
                 isCompleting={completingTaskIds?.has(task.id)}
