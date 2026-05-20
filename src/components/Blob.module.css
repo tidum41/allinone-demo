@@ -73,7 +73,7 @@
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  border: 1.5px solid var(--color-border);
+  border: 1.5px solid var(--color-checkbox-border);
   background: transparent;
   flex-shrink: 0;
   margin-top: 5px;

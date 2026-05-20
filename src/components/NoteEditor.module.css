@@ -156,6 +156,7 @@
   letter-spacing: -0.02em;
   display: block;
   line-height: 1;
+  transform: translateY(2px);
 }
 
 .aaWrap {
