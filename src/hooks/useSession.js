@@ -1,36 +1,38 @@
 import { useState, useCallback } from 'react'
 import { makeTextLine, makeCheckLine, makeBulletLine } from '../components/Blob'
 
-// Peter Parker — product designer at a mid-size studio in Queens
+// Peter Parker — your friendly neighborhood Spider-Man
 const DEMO_LINES = [
-  "finish wireframes for the hero onboarding flow",
-  "pick up Aunt May's prescription before Thursday",
-  "submit invoice to Stark Industries for last sprint",
-  "redesign the emergency alert system — current one is way too slow",
-  "get photos turned in to the Bugle by noon",
-  "review usability test results on the crawl navigation pattern",
-  "renew renter's insurance for the Queens apartment",
-  "coffee with Harry to align on the rebrand direction",
-  "update design system after Ben finally approved the new tokens",
-  "think about switching to a smaller studio — corporate is exhausting",
-  "clean the apartment before MJ gets back from touring",
-  "sign up for neighborhood emergency response training",
-  "prototype the new gesture-based interactions for mobile",
-  "read that article on ethical design in surveillance tech",
-  "finish online typography course — 3 modules left",
+  "repair the web-shooters before patrol tonight — left one is misfiring",
+  "pick up Aunt May's prescription before she finds out I skipped dinner again",
+  "get the Spider-Man photos turned in to Jameson by noon (without getting fired)",
+  "stop the Vulture's heist at the docks — 9pm, don't be late",
+  "fix the mask lenses — HUD keeps glitching mid-swing",
+  "call MJ back before she thinks I'm dead (again)",
+  "synthesize more web fluid — running dangerously low after the Rhino chase",
+  "study for the Chem midterm — can't let the grades slip again",
+  "replace the suit's torn panels from the Green Goblin fight",
+  "figure out how to tell Aunt May I'm Spider-Man",
+  "set up new perches across Midtown for faster response times",
+  "return Ned's laptop — accidentally webbed it to the ceiling",
+  "train the new wall-crawling angle — still landing weird after the Lizard fight",
+  "stop Mysterio's illusion rig before it hits Times Square",
+  "sleep. actually sleep. more than 3 hours.",
 ].map(text => makeCheckLine(text))
 
 const THINGS_I_LIKE_BODY = JSON.stringify([
-  makeBulletLine("swinging between buildings at 6am before anyone's awake"),
-  makeBulletLine("that moment when a wireframe just clicks"),
-  makeBulletLine("Aunt May's chicken soup, no notes"),
-  makeBulletLine("old film cameras — especially the ones you have to manually focus"),
-  makeBulletLine("when a user test goes way better than expected"),
+  makeBulletLine("swinging between skyscrapers at 6am when the city's still quiet"),
+  makeBulletLine("that split-second of freefall before the web catches"),
+  makeBulletLine("Aunt May's wheatcakes — no notes, perfection"),
+  makeBulletLine("when the web-shooter clicks perfectly on the first try"),
   makeBulletLine("MJ's laugh when something genuinely surprises her"),
-  makeBulletLine("late night debugging sessions with lo-fi beats"),
-  makeBulletLine("the smell of a used bookstore in the rain"),
-  makeBulletLine("finding an elegant design solution after days of nothing"),
-  makeBulletLine("rooftops in general, honestly"),
+  makeBulletLine("the view from the top of the Empire State Building at night"),
+  makeBulletLine("Ned's enthusiasm for literally everything Spider-Man"),
+  makeBulletLine("old film cameras — the manual focus ones especially"),
+  makeBulletLine("that feeling when you catch someone before they hit the ground"),
+  makeBulletLine("rooftops in general — best seats in New York"),
+  makeBulletLine("the hum of the city at 2am when everyone else is asleep"),
+  makeBulletLine("finally nailing a new web-slinging trick after weeks of failing"),
 ])
 
 const DEFAULT_NOTES = [
