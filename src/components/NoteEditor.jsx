@@ -222,6 +222,13 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen, isSi
               )}
             </div>
           )}
+          <button
+            className={styles.iconBtn}
+            onClick={() => { const el = blobRef.current; if (el?.undo) el.undo(); else document.execCommand('undo') }}
+            aria-label="Undo"
+          >
+            <UndoIcon />
+          </button>
           {!isArchive && (
             <button
               className={styles.iconBtn}
@@ -242,13 +249,6 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen, isSi
               <ChecklistIcon />
             </button>
           )}
-          <button
-            className={styles.iconBtn}
-            onClick={() => { const el = blobRef.current; if (el?.undo) el.undo(); else document.execCommand('undo') }}
-            aria-label="Undo"
-          >
-            <UndoIcon />
-          </button>
           <div ref={deleteWrapRef} className={styles.deleteWrap}>
             {deleteConfirm && (
               <div className={styles.deletePopover}>

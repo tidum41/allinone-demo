@@ -164,7 +164,14 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
           )}
         </div>
 
-        {/* Order: Aa · Bullet · Checklist · Undo · Sort — matches NoteEditor */}
+        {/* Order: Aa · Undo · Bullet · Checklist · Sort */}
+        <button
+          className={styles.iconBtn}
+          onClick={e => { onUndo(); e.currentTarget.blur() }}
+          aria-label="Undo"
+        >
+          <UndoIcon />
+        </button>
         <button
           className={`${styles.iconBtn} ${activeLineType === 'bullet' ? styles.iconBtnActive : ''}`}
           onMouseDown={e => e.preventDefault()}
@@ -180,13 +187,6 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
           aria-label="Toggle checklist"
         >
           <ChecklistIcon />
-        </button>
-        <button
-          className={styles.iconBtn}
-          onClick={e => { onUndo(); e.currentTarget.blur() }}
-          aria-label="Undo"
-        >
-          <UndoIcon />
         </button>
 
         <button
