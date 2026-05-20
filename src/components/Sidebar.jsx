@@ -8,7 +8,7 @@ function formatDate(dateStr) {
 
 function MoonIcon() {
   return (
-    <svg width="16" height="16" viewBox="-2 -2 20 20" fill="none">
+    <svg width="16" height="16" viewBox="-2 -2 20 20" fill="none" overflow="visible">
       <path
         d="M14 10.8A7 7 0 0 1 5.2 2 7 7 0 1 0 14 10.8z"
         stroke="currentColor"
