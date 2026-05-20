@@ -56,8 +56,8 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
   const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false })
   const aaRef = useRef(null)
 
-  // Read actual format state from the DOM — only when selection is inside a contenteditable
-  // so clicking the popover buttons (non-editable) doesn't reset the indicators.
+  // Read actual format state from the DOM — only when selection is inside a contenteditable.
+  // Called when the popover opens and after each format button click (via RAF).
   const refreshFormats = useCallback(() => {
     const sel = document.getSelection()
     if (!sel || sel.rangeCount === 0) return
@@ -73,16 +73,21 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
     } catch {}
   }, [])
 
-  // Keep indicators in sync as the cursor moves through formatted text
-  useEffect(() => {
-    document.addEventListener('selectionchange', refreshFormats)
-    return () => document.removeEventListener('selectionchange', refreshFormats)
-  }, [refreshFormats])
-
   // Refresh when the popover is opened so it shows correct state immediately
   useEffect(() => {
     if (formatOpen) refreshFormats()
   }, [formatOpen, refreshFormats])
+
+  // After calling onFormat (which restores selection then runs execCommand),
+  // read queryCommandState synchronously — selection is in the right place at this point.
+  const handleFormat = useCallback((type) => {
+    onFormat?.(type)
+    try {
+      const isOn = document.queryCommandState(type)
+      setActiveFormats(prev => ({ ...prev, [type]: isOn }))
+    } catch {}
+    requestAnimationFrame(refreshFormats)
+  }, [onFormat, refreshFormats])
 
   // Close popover on outside click / touch
   useEffect(() => {
@@ -130,27 +135,27 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
             <div className={styles.formatPopover}>
               <button
                 className={`${styles.formatBtn} ${activeFormats.bold ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('bold'); requestAnimationFrame(refreshFormats) }}
+                onMouseDown={e => { e.preventDefault(); handleFormat('bold') }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('bold'); requestAnimationFrame(refreshFormats) }}
+                onTouchEnd={e => { e.preventDefault(); handleFormat('bold') }}
                 aria-label="Bold"
               >
                 <b>B</b>
               </button>
               <button
                 className={`${styles.formatBtn} ${activeFormats.italic ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('italic'); requestAnimationFrame(refreshFormats) }}
+                onMouseDown={e => { e.preventDefault(); handleFormat('italic') }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('italic'); requestAnimationFrame(refreshFormats) }}
+                onTouchEnd={e => { e.preventDefault(); handleFormat('italic') }}
                 aria-label="Italic"
               >
                 <span className={styles.fmtItalicLabel}>I</span>
               </button>
               <button
                 className={`${styles.formatBtn} ${activeFormats.underline ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('underline'); requestAnimationFrame(refreshFormats) }}
+                onMouseDown={e => { e.preventDefault(); handleFormat('underline') }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('underline'); requestAnimationFrame(refreshFormats) }}
+                onTouchEnd={e => { e.preventDefault(); handleFormat('underline') }}
                 aria-label="Underline"
               >
                 <span className={styles.fmtUnderlineLabel}>U</span>
@@ -159,13 +164,7 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
           )}
         </div>
 
-        <button
-          className={styles.iconBtn}
-          onClick={e => { onUndo(); e.currentTarget.blur() }}
-          aria-label="Undo"
-        >
-          <UndoIcon />
-        </button>
+        {/* Order: Aa · Bullet · Checklist · Undo · Sort — matches NoteEditor */}
         <button
           className={`${styles.iconBtn} ${activeLineType === 'bullet' ? styles.iconBtnActive : ''}`}
           onMouseDown={e => e.preventDefault()}
@@ -182,7 +181,13 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
         >
           <ChecklistIcon />
         </button>
-        {/* Summary hidden for now — keep code, functionality TBD */}
+        <button
+          className={styles.iconBtn}
+          onClick={e => { onUndo(); e.currentTarget.blur() }}
+          aria-label="Undo"
+        >
+          <UndoIcon />
+        </button>
 
         <button
           className={`${styles.sortBtn} ${loading ? styles.sorting : ''} ${sortDone ? styles.sortDone : ''}`}

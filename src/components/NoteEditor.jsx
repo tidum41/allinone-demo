@@ -67,8 +67,8 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen, isSi
 
   const isArchive = note?.title?.toLowerCase() === 'completed archive'
 
-  // Read actual format state from the DOM — only when selection is inside a contenteditable
-  // so clicking the popover buttons (non-editable) doesn't reset the indicators.
+  // Read actual format state from the DOM — only when selection is inside a contenteditable.
+  // Called when the popover opens and after each format button click (via RAF).
   const refreshFormats = useCallback(() => {
     const sel = document.getSelection()
     if (!sel || sel.rangeCount === 0) return
@@ -83,12 +83,6 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen, isSi
       })
     } catch {}
   }, [])
-
-  // Keep indicators in sync as the cursor moves through formatted text
-  useEffect(() => {
-    document.addEventListener('selectionchange', refreshFormats)
-    return () => document.removeEventListener('selectionchange', refreshFormats)
-  }, [refreshFormats])
 
   // Refresh when the popover is opened so it shows correct state immediately
   useEffect(() => {
@@ -159,6 +153,11 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen, isSi
 
   const applyFormat = (type) => {
     blobRef.current?.format(type)
+    // format() restores selection before returning — read queryCommandState now while it's accurate
+    try {
+      const isOn = document.queryCommandState(type)
+      setActiveFormats(prev => ({ ...prev, [type]: isOn }))
+    } catch {}
     requestAnimationFrame(refreshFormats)
   }
 
