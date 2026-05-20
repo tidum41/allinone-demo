@@ -82,9 +82,19 @@
   position: relative;
 }
 
+.square:hover,
+.square:active {
+  background: transparent;
+}
+
 .squareChecked {
   background: var(--color-text-secondary);
   border-color: var(--color-text-secondary);
+}
+
+.squareChecked:hover,
+.squareChecked:active {
+  background: var(--color-text-secondary);
 }
 
 .squareChecked::after {

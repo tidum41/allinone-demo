@@ -32,11 +32,14 @@ export function CategorySection({
   // ── Row hit-test ─────────────────────────────────────────────────────
   const getRowIdxFromY = useCallback((y) => {
     const rows = tasksInnerRef.current?.querySelectorAll('.taskRow') ?? []
+    if (!rows.length) return -1
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i].getBoundingClientRect()
       if (y >= r.top - 8 && y <= r.bottom + 8) return i
     }
-    return -1
+    // Clamp to first/last row (covers clicks in section padding)
+    if (y < rows[0].getBoundingClientRect().top) return 0
+    return rows.length - 1
   }, [])
 
   // ── Pointer handlers for cross-row drag selection ─────────────────────

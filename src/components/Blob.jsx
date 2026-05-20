@@ -97,6 +97,7 @@ const BlobLine = forwardRef(function BlobLine(
         ref={setRef}
         contentEditable
         suppressContentEditableWarning
+        spellCheck={false}
         className={`${styles.lineInput} ${line.type === 'check' && line.checked ? styles.strikethrough : ''}`}
         onInput={handleInput}
         onKeyDown={onKeyDown}
@@ -276,8 +277,8 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
         }
       }
 
-      // 3. Backspace at start of bullet/check → convert to plain text (empty or not)
-      if (e.key === 'Backspace') {
+      // 3. Backspace or Delete at start of bullet/check → convert to plain text
+      {
         const cur = lines[idx]
         const hasContent = !!e.currentTarget.textContent?.trim()
         if ((cur.type === 'check' || cur.type === 'bullet') && isCursorAtStart(e.currentTarget)) {
@@ -296,8 +297,8 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
           return
         }
 
-        // 4. Empty line → remove it
-        if (!hasContent && lines.length > 1) {
+        // 4. Empty text line → remove it (Backspace only)
+        if (e.key === 'Backspace' && !hasContent && lines.length > 1) {
           e.preventDefault()
           onChange(lines.filter((_, i) => i !== idx))
           setTimeout(() => inputRefs.current[Math.max(0, idx - 1)]?.focus(), 0)

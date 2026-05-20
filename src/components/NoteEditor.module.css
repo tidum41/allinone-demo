@@ -125,9 +125,14 @@
 .deletePopoverLabel {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  min-height: 32px;
 }
 
 .deletePopoverConfirm {
+  display: flex;
+  align-items: center;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: #FF3B30;
