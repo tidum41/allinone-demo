@@ -154,6 +154,8 @@
   font-size: 13px;
   font-weight: var(--font-weight-medium);
   letter-spacing: -0.02em;
+  display: block;
+  line-height: 1;
 }
 
 .aaWrap {

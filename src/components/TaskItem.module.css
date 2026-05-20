@@ -13,6 +13,7 @@
   transition: opacity var(--transition-normal), background var(--transition-fast), transform var(--transition-fast);
   border-radius: 8px;
   user-select: none;
+  touch-action: none;
 }
 
 /* ── Completion sequence ──────────────────────────────────────────── */
