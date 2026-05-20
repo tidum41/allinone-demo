@@ -56,21 +56,9 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
   const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false })
   const aaRef = useRef(null)
 
-  const refreshFormats = () => {
-    try {
-      setActiveFormats({
-        bold: document.queryCommandState('bold'),
-        italic: document.queryCommandState('italic'),
-        underline: document.queryCommandState('underline'),
-      })
-    } catch {}
+  const toggleFormat = (type) => {
+    setActiveFormats(prev => ({ ...prev, [type]: !prev[type] }))
   }
-
-  // Track which formats are active at the current cursor position
-  useEffect(() => {
-    document.addEventListener('selectionchange', refreshFormats)
-    return () => document.removeEventListener('selectionchange', refreshFormats)
-  }, [])
 
   // Close popover on outside click / touch
   useEffect(() => {
@@ -118,27 +106,27 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
             <div className={styles.formatPopover}>
               <button
                 className={`${styles.formatBtn} ${activeFormats.bold ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('bold'); requestAnimationFrame(refreshFormats) }}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('bold'); toggleFormat('bold') }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('bold'); requestAnimationFrame(refreshFormats) }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('bold'); toggleFormat('bold') }}
                 aria-label="Bold"
               >
                 <b>B</b>
               </button>
               <button
                 className={`${styles.formatBtn} ${activeFormats.italic ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('italic'); requestAnimationFrame(refreshFormats) }}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('italic'); toggleFormat('italic') }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('italic'); requestAnimationFrame(refreshFormats) }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('italic'); toggleFormat('italic') }}
                 aria-label="Italic"
               >
                 <span className={styles.fmtItalicLabel}>I</span>
               </button>
               <button
                 className={`${styles.formatBtn} ${activeFormats.underline ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('underline'); requestAnimationFrame(refreshFormats) }}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('underline'); toggleFormat('underline') }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('underline'); requestAnimationFrame(refreshFormats) }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('underline'); toggleFormat('underline') }}
                 aria-label="Underline"
               >
                 <span className={styles.fmtUnderlineLabel}>U</span>

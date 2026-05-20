@@ -67,21 +67,9 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen, isSi
 
   const isArchive = note?.title?.toLowerCase() === 'completed archive'
 
-  const refreshFormats = useCallback(() => {
-    try {
-      setActiveFormats({
-        bold: document.queryCommandState('bold'),
-        italic: document.queryCommandState('italic'),
-        underline: document.queryCommandState('underline'),
-      })
-    } catch {}
+  const toggleFormat = useCallback((type) => {
+    setActiveFormats(prev => ({ ...prev, [type]: !prev[type] }))
   }, [])
-
-  // Track active formats at cursor position
-  useEffect(() => {
-    document.addEventListener('selectionchange', refreshFormats)
-    return () => document.removeEventListener('selectionchange', refreshFormats)
-  }, [refreshFormats])
 
   // Close format popover on outside click
   useEffect(() => {
@@ -147,7 +135,7 @@ export function NoteEditor({ note, onSave, onDelete, onBack, onSidebarOpen, isSi
 
   const applyFormat = (type) => {
     blobRef.current?.format(type)
-    requestAnimationFrame(refreshFormats)
+    toggleFormat(type)
   }
 
   return (
