@@ -28,6 +28,12 @@
   background: var(--color-selection);
 }
 
+/* Checkbox border disappears in dark mode because --color-checkbox-border
+   matches --color-selection exactly. Bump it to a visible mid-tone. */
+.lineSelected .square {
+  border-color: var(--color-text-placeholder);
+}
+
 .lineInput {
   flex: 1;
   border: none;
