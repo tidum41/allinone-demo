@@ -4,6 +4,7 @@
   --color-surface: #FFFFFF;
   --color-border: #EBEBEB;
   --color-checkbox-border: #C4C4C4;
+  --color-selection: #E5E5E1;
 
   /* Text */
   --color-text-primary: #1A1A1A;
@@ -59,6 +60,7 @@
   --color-surface: #2C2C2E;
   --color-border: #3A3A3C;
   --color-checkbox-border: #3A3A3C;
+  --color-selection: #3A3A3C;
   --color-text-primary: #F2F2F7;
   --color-text-secondary: #8E8E93;
   --color-text-placeholder: #58585A;

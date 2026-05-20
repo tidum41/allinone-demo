@@ -289,6 +289,7 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
         const hasContent = !!e.currentTarget.textContent?.trim()
         if ((cur.type === 'check' || cur.type === 'bullet') && isCursorAtStart(e.currentTarget)) {
           e.preventDefault()
+          onBeforeLineDelete?.(lines)
           onChange(lines.map((l, i) => i === idx ? { ...l, type: 'text' } : l))
           setTimeout(() => {
             const el = inputRefs.current[idx]
@@ -306,6 +307,7 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
         // 4. Empty text line → remove it (Backspace only)
         if (e.key === 'Backspace' && !hasContent && lines.length > 1) {
           e.preventDefault()
+          onBeforeLineDelete?.(lines)
           onChange(lines.filter((_, i) => i !== idx))
           setTimeout(() => inputRefs.current[Math.max(0, idx - 1)]?.focus(), 0)
           return
@@ -342,6 +344,7 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
     toggleChecklist() {
       const idx = focusedIdx.current
       const cur = lines[idx]
+      onBeforeLineDelete?.(lines)
       if (!cur) {
         const newLine = makeCheckLine()
         onChange([...lines, newLine])
@@ -360,6 +363,7 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
     toggleBullet() {
       const idx = focusedIdx.current
       const cur = lines[idx]
+      onBeforeLineDelete?.(lines)
       if (!cur) {
         const newLine = makeBulletLine()
         onChange([...lines, newLine])

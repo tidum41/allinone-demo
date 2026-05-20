@@ -155,6 +155,9 @@ export default function App() {
         persistTasks(updated)
         return updated
       })
+    } else if (last.type === 'taskDelete') {
+      setTasks(last.snapshot)
+      persistTasks(last.snapshot)
     } else if (last.type === 'drag') {
       setTasks(prev => {
         const updated = prev.map(t => t.id === last.task.id ? { ...t, category: last.fromCategory } : t)
@@ -325,11 +328,12 @@ export default function App() {
   const handleDeleteTasks = useCallback((ids) => {
     const idSet = new Set(ids)
     setTasks(prev => {
+      pushUndo({ type: 'taskDelete', snapshot: prev })
       const updated = prev.filter(t => !idSet.has(t.id))
       persistTasks(updated)
       return updated
     })
-  }, [persistTasks])
+  }, [persistTasks, pushUndo])
 
   const sidebarColClass = `sidebarCol${sidebarOpen ? ' sidebarColOpen' : ' sidebarColClosed'}`
   const sidebarDragStyle = dragOffset !== null

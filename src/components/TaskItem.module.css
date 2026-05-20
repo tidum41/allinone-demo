@@ -83,7 +83,7 @@
 
 /* Multi-row drag selection highlight */
 .item.selected {
-  background: var(--color-surface);
+  background: var(--color-selection);
   border-radius: 0;
 }
 
