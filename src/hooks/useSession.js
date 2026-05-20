@@ -3,21 +3,19 @@ import { makeTextLine, makeCheckLine, makeBulletLine } from '../components/Blob'
 
 // Peter Parker — your friendly neighborhood Spider-Man
 const DEMO_LINES = [
-  "repair the web-shooters before patrol tonight — left one is misfiring",
-  "pick up Aunt May's prescription before she finds out I skipped dinner again",
-  "get the Spider-Man photos turned in to Jameson by noon (without getting fired)",
-  "stop the Vulture's heist at the docks — 9pm, don't be late",
-  "fix the mask lenses — HUD keeps glitching mid-swing",
-  "call MJ back before she thinks I'm dead (again)",
-  "synthesize more web fluid — running dangerously low after the Rhino chase",
-  "study for the Chem midterm — can't let the grades slip again",
-  "replace the suit's torn panels from the Green Goblin fight",
+  "fix the web shooters before tonight, the left one keeps jamming",
+  "pick up Aunt May's prescription before she notices I skipped dinner again",
+  "get the Spider-Man photos to Jameson by noon without getting fired",
+  "stop the Vulture's heist at the docks at 9pm, do not be late",
   "figure out how to tell Aunt May I'm Spider-Man",
-  "set up new perches across Midtown for faster response times",
-  "return Ned's laptop — accidentally webbed it to the ceiling",
-  "train the new wall-crawling angle — still landing weird after the Lizard fight",
-  "stop Mysterio's illusion rig before it hits Times Square",
-  "sleep. actually sleep. more than 3 hours.",
+  "call MJ back before she assumes the worst again",
+  "make more web fluid, almost completely out after the chase this morning",
+  "study for the chemistry midterm, grades cannot slip",
+  "patch up the suit from the Green Goblin fight, it looks rough",
+  "return Ned's laptop, accidentally stuck it to the ceiling",
+  "stop Mysterio before whatever he is planning reaches Times Square",
+  "scout faster routes across Midtown for quicker response times",
+  "actually sleep tonight, more than three hours this time",
 ].map(text => makeCheckLine(text))
 
 const THINGS_I_LIKE_BODY = JSON.stringify([
