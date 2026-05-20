@@ -148,8 +148,6 @@
 
 .iconBtnActive {
   color: var(--color-text-primary);
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
 }
 
 .aaLabel {

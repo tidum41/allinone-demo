@@ -164,9 +164,15 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
   const handleBlobPointerUp = useCallback(() => {
     // Remove user-select:none regardless of whether it was a drag
     blobContainerRef.current?.classList.remove(styles.blobSelecting)
-    // Plain click (no cross-line drag) → clear selection
-    if (dragAnchorRef.current && !dragAnchorRef.current.active) {
-      clearLineSel()
+    if (dragAnchorRef.current) {
+      if (!dragAnchorRef.current.active) {
+        // Plain click (no cross-line drag) → clear selection
+        clearLineSel()
+      } else {
+        // Cross-line drag just ended — suppress the focus event that the
+        // following click fires, which would otherwise call clearLineSel()
+        skipNextFocusClearRef.current = true
+      }
     }
     dragAnchorRef.current = null
   }, [clearLineSel])

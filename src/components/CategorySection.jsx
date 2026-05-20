@@ -47,6 +47,8 @@ export function CategorySection({
     if (e.button !== 0) return
     // Skip if a task is currently being edited
     if (tasksInnerRef.current?.querySelector('textarea:focus')) return
+    // A new press clears any lingering selection (unless it turns into a drag)
+    setRowSel(null)
     const idx = getRowIdxFromY(e.clientY)
     if (idx === -1) return
     dragAnchorRef.current = { idx, active: false }
@@ -68,11 +70,8 @@ export function CategorySection({
   }, [getRowIdxFromY])
 
   const handlePointerUp = useCallback(() => {
+    // Just clean up — selection persists until the next pointerDown
     tasksInnerRef.current?.classList.remove(styles.tasksSelecting)
-    // Plain click (not a cross-row drag) → clear selection
-    if (dragAnchorRef.current && !dragAnchorRef.current.active) {
-      setRowSel(null)
-    }
     dragAnchorRef.current = null
   }, [])
 
