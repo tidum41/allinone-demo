@@ -383,19 +383,41 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
       const el = inputRefs.current[focusedIdx.current]
       if (!el) return
       el.focus()
+
+      const sel = window.getSelection()
+      // Restore saved range from blur (critical on mobile where focus leaves the element)
       if (el._savedRange) {
-        const sel = window.getSelection()
         sel.removeAllRanges()
         sel.addRange(el._savedRange)
         el._savedRange = null
       }
+
+      // Snapshot the range NOW so we can restore it after execCommand.
+      // execCommand often collapses the selection, which would break stacked
+      // format clicks (B then I would apply italic to the wrong position).
+      const snapshot = sel?.rangeCount > 0 && !sel.isCollapsed
+        ? sel.getRangeAt(0).cloneRange()
+        : null
+
       const prevHTML = el.innerHTML
-      const sel = window.getSelection()
-      const wasCollapsed = !sel || sel.isCollapsed
       document.execCommand(type, false, null)
-      if (wasCollapsed && el.innerHTML === prevHTML) {
+
+      // Restore the pre-execCommand selection so the next format click
+      // (e.g. Italic after Bold) targets the exact same text.
+      if (snapshot) {
+        try {
+          const s = window.getSelection()
+          s.removeAllRanges()
+          s.addRange(snapshot)
+        } catch {}
+      }
+
+      // Collapsed cursor with no visible change → insert a zero-width space
+      // so the pending format sticks for the next typed character
+      if (!snapshot && el.innerHTML === prevHTML) {
         document.execCommand('insertText', false, '​')
       }
+
       el.dispatchEvent(new InputEvent('input', { bubbles: true }))
     },
 

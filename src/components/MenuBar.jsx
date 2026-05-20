@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './MenuBar.module.css'
 
 // Outlined square only — no checkmark
@@ -56,9 +56,33 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
   const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false })
   const aaRef = useRef(null)
 
-  const toggleFormat = (type) => {
-    setActiveFormats(prev => ({ ...prev, [type]: !prev[type] }))
-  }
+  // Read actual format state from the DOM — only when selection is inside a contenteditable
+  // so clicking the popover buttons (non-editable) doesn't reset the indicators.
+  const refreshFormats = useCallback(() => {
+    const sel = document.getSelection()
+    if (!sel || sel.rangeCount === 0) return
+    const anchor = sel.anchorNode
+    const el = anchor?.nodeType === Node.TEXT_NODE ? anchor.parentElement : anchor
+    if (!el?.closest?.('[contenteditable]')) return
+    try {
+      setActiveFormats({
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+      })
+    } catch {}
+  }, [])
+
+  // Keep indicators in sync as the cursor moves through formatted text
+  useEffect(() => {
+    document.addEventListener('selectionchange', refreshFormats)
+    return () => document.removeEventListener('selectionchange', refreshFormats)
+  }, [refreshFormats])
+
+  // Refresh when the popover is opened so it shows correct state immediately
+  useEffect(() => {
+    if (formatOpen) refreshFormats()
+  }, [formatOpen, refreshFormats])
 
   // Close popover on outside click / touch
   useEffect(() => {
@@ -106,27 +130,27 @@ export function MenuBar({ onSidebarOpen, onSort, onSummary, onChecklist, onBulle
             <div className={styles.formatPopover}>
               <button
                 className={`${styles.formatBtn} ${activeFormats.bold ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('bold'); toggleFormat('bold') }}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('bold'); requestAnimationFrame(refreshFormats) }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('bold'); toggleFormat('bold') }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('bold'); requestAnimationFrame(refreshFormats) }}
                 aria-label="Bold"
               >
                 <b>B</b>
               </button>
               <button
                 className={`${styles.formatBtn} ${activeFormats.italic ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('italic'); toggleFormat('italic') }}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('italic'); requestAnimationFrame(refreshFormats) }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('italic'); toggleFormat('italic') }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('italic'); requestAnimationFrame(refreshFormats) }}
                 aria-label="Italic"
               >
                 <span className={styles.fmtItalicLabel}>I</span>
               </button>
               <button
                 className={`${styles.formatBtn} ${activeFormats.underline ? styles.formatBtnOn : ''}`}
-                onMouseDown={e => { e.preventDefault(); onFormat?.('underline'); toggleFormat('underline') }}
+                onMouseDown={e => { e.preventDefault(); onFormat?.('underline'); requestAnimationFrame(refreshFormats) }}
                 onTouchStart={e => e.preventDefault()}
-                onTouchEnd={e => { e.preventDefault(); onFormat?.('underline'); toggleFormat('underline') }}
+                onTouchEnd={e => { e.preventDefault(); onFormat?.('underline'); requestAnimationFrame(refreshFormats) }}
                 aria-label="Underline"
               >
                 <span className={styles.fmtUnderlineLabel}>U</span>
