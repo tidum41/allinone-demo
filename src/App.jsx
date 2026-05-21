@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { Agentation } from 'agentation'
 import { useSession } from './hooks/useSession'
 import { categorizeTasks } from './lib/groq'
@@ -443,6 +444,7 @@ export default function App() {
       </div>
       </div>
       {import.meta.env.DEV && <Agentation />}
+      <Analytics />
     </div>
   )
 }
