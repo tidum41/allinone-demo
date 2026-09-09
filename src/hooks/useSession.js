@@ -128,7 +128,7 @@ export function useSession() {
     const rule = { taskText, correctedCategory, dateAdded: new Date().toISOString() }
     setCategoryRules(prev => {
       const updated = [...prev.filter(r => r.taskText !== taskText), rule]
-    ssSet('demo:v2:rules', updated)
+      ssSet('demo:v2:rules', updated)
       return updated
     })
   }, [])
