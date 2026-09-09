@@ -1,36 +1,37 @@
 import { useState, useCallback } from 'react'
 import { makeTextLine, makeCheckLine, makeBulletLine } from '../components/Blob'
 
-// Peter Parker — your friendly neighborhood Spider-Man
+// Playful everyday dump — covers every sort category without a character theme
 const DEMO_LINES = [
-  "fix the web shooters before tonight, the left one keeps jamming",
-  "pick up Aunt May's prescription before she notices I skipped dinner again",
-  "get the Spider-Man photos to Jameson by noon without getting fired",
-  "stop the Vulture's heist at the docks at 9pm, do not be late",
-  "figure out how to tell Aunt May I'm Spider-Man",
-  "call MJ back before she assumes the worst again",
-  "make more web fluid, almost completely out after the chase this morning",
-  "study for the chemistry midterm, grades cannot slip",
-  "patch up the suit from the Green Goblin fight, it looks rough",
-  "return Ned's laptop, accidentally stuck it to the ceiling",
-  "stop Mysterio before whatever he is planning reaches Times Square",
-  "scout faster routes across Midtown for quicker response times",
-  "actually sleep tonight, more than three hours this time",
+  "finish the reading I promised myself last Tuesday",
+  "print the poster before the library actually closes",
+  "tidy the portfolio case study that still says draft",
+  "send the three screens even if they are a little ugly",
+  "reply to the group chat about who is bringing snacks",
+  "show up to the Saturday volunteer shift I signed up for half asleep",
+  "take out the recycling before it becomes modern art",
+  "buy oat milk, the regular kind this time",
+  "water the plant that is pretending to be fine",
+  "text mom back, she sent four photos of a bird",
+  "go for the walk that has been on the calendar all week",
+  "sleep before 2am as a fun little experiment",
+  "what if the notes just sorted themselves",
+  "learn to make sourdough or at least buy bread on purpose",
 ].map(text => makeCheckLine(text))
 
 const THINGS_I_LIKE_BODY = JSON.stringify([
-  makeBulletLine("swinging between skyscrapers at 6am when the city's still quiet"),
-  makeBulletLine("that split-second of freefall before the web catches"),
-  makeBulletLine("Aunt May's wheatcakes — no notes, perfection"),
-  makeBulletLine("when the web-shooter clicks perfectly on the first try"),
-  makeBulletLine("MJ's laugh when something genuinely surprises her"),
-  makeBulletLine("the view from the top of the Empire State Building at night"),
-  makeBulletLine("Ned's enthusiasm for literally everything Spider-Man"),
-  makeBulletLine("old film cameras — the manual focus ones especially"),
-  makeBulletLine("that feeling when you catch someone before they hit the ground"),
-  makeBulletLine("rooftops in general — best seats in New York"),
-  makeBulletLine("the hum of the city at 2am when everyone else is asleep"),
-  makeBulletLine("finally nailing a new web-slinging trick after weeks of failing"),
+  makeBulletLine("when the coffee is still hot after I sit down"),
+  makeBulletLine("the first ten minutes of a new notebook"),
+  makeBulletLine("grocery stores at 9am when nobody is rushing"),
+  makeBulletLine("a playlist that picks the perfect next song"),
+  makeBulletLine("dogs who make eye contact like they have a meeting"),
+  makeBulletLine("rain that starts right after I get inside"),
+  makeBulletLine("leftover pasta that somehow tastes better"),
+  makeBulletLine("finding a pen that still works in the junk drawer"),
+  makeBulletLine("the quiet after finally sending the email"),
+  makeBulletLine("a loading bar that actually finishes"),
+  makeBulletLine("the sound of a sticker peeling cleanly"),
+  makeBulletLine("opening a window and the air is nicer than expected"),
 ])
 
 const DEFAULT_NOTES = [
@@ -69,30 +70,30 @@ function stripHtml(html) {
 }
 
 export function useSession() {
-  const [lines, setLines] = useState(() => ssGet('demo:lines', DEMO_LINES))
-  const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:rules', []))
-  const [notes, setNotes] = useState(() => ssGet('demo:notes', DEFAULT_NOTES))
-  const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:tasks', []))
-  const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:completed', []))
-  const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:prevTasks', []))
+  const [lines, setLines] = useState(() => ssGet('demo:v2:lines', DEMO_LINES))
+  const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:v2:rules', []))
+  const [notes, setNotes] = useState(() => ssGet('demo:v2:notes', DEFAULT_NOTES))
+  const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:v2:tasks', []))
+  const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:v2:completed', []))
+  const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:v2:prevTasks', []))
 
   const blobText = lines.filter(l => l.type === 'check').map(l => stripHtml(l.content)).filter(Boolean).join('\n')
 
   const updateLines = useCallback((newLines) => {
     setLines(newLines)
-    ssSet('demo:lines', newLines)
+    ssSet('demo:v2:lines', newLines)
   }, [])
 
   const persistTasks = useCallback((tasks) => {
     setSavedTasks(tasks)
-    ssSet('demo:tasks', tasks)
+    ssSet('demo:v2:tasks', tasks)
   }, [])
 
   const persistCompleted = useCallback((task) => {
     const done = { ...task, dateCompleted: new Date().toISOString() }
     setSavedCompleted(prev => {
       const updated = [...prev, done]
-      ssSet('demo:completed', updated)
+      ssSet('demo:v2:completed', updated)
       return updated
     })
   }, [])
@@ -100,7 +101,7 @@ export function useSession() {
   const removeCompleted = useCallback((taskId) => {
     setSavedCompleted(prev => {
       const updated = prev.filter(t => t.id !== taskId)
-      ssSet('demo:completed', updated)
+      ssSet('demo:v2:completed', updated)
       return updated
     })
   }, [])
@@ -109,25 +110,25 @@ export function useSession() {
     const idSet = new Set(ids)
     setSavedCompleted(prev => {
       const updated = prev.filter(t => !idSet.has(t.id))
-      ssSet('demo:completed', updated)
+      ssSet('demo:v2:completed', updated)
       return updated
     })
   }, [])
 
   const persistPrevTasks = useCallback((tasks) => {
     setPrevSortedTasks(tasks)
-    ssSet('demo:prevTasks', tasks)
+    ssSet('demo:v2:prevTasks', tasks)
   }, [])
 
   const persistPreSortBlob = useCallback((lines) => {
-    ssSet('demo:preSortBlob', lines)
+    ssSet('demo:v2:preSortBlob', lines)
   }, [])
 
   const saveRule = useCallback((taskText, correctedCategory) => {
     const rule = { taskText, correctedCategory, dateAdded: new Date().toISOString() }
     setCategoryRules(prev => {
       const updated = [...prev.filter(r => r.taskText !== taskText), rule]
-      ssSet('demo:rules', updated)
+    ssSet('demo:v2:rules', updated)
       return updated
     })
   }, [])
@@ -139,7 +140,7 @@ export function useSession() {
       const updated = id
         ? prev.map(n => n.id === id ? noteData : n)
         : [...prev, noteData]
-      ssSet('demo:notes', updated)
+      ssSet('demo:v2:notes', updated)
       return updated
     })
     return Promise.resolve(noteId)
@@ -148,7 +149,7 @@ export function useSession() {
   const deleteNote = useCallback((id) => {
     setNotes(prev => {
       const updated = prev.filter(n => n.id !== id)
-      ssSet('demo:notes', updated)
+      ssSet('demo:v2:notes', updated)
       return updated
     })
   }, [])
