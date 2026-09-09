@@ -6,7 +6,6 @@ const DEMO_LINES = [
   "fix the web shooters before Gwen's thing, the left one jammed on the way over",
   "get the Oscorp lab photos to Jameson without him asking why I was on the ceiling",
   "finish the biology writeup before Connors notices I redesigned the web fluid again",
-  "tell Gwen I am Spider-Man, or she already knows, either way show up on time",
   "make more web fluid, the last batch was a little too sticky even for me",
   "stop Connors before the Lizard thing reaches the bridge",
   "call Aunt May, I missed dinner and she is going to use the full name",
@@ -70,30 +69,30 @@ function stripHtml(html) {
 }
 
 export function useSession() {
-  const [lines, setLines] = useState(() => ssGet('demo:v6:lines', DEMO_LINES))
-  const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:v6:rules', []))
-  const [notes, setNotes] = useState(() => ssGet('demo:v6:notes', DEFAULT_NOTES))
-  const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:v6:tasks', []))
-  const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:v6:completed', []))
-  const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:v6:prevTasks', []))
+  const [lines, setLines] = useState(() => ssGet('demo:v7:lines', DEMO_LINES))
+  const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:v7:rules', []))
+  const [notes, setNotes] = useState(() => ssGet('demo:v7:notes', DEFAULT_NOTES))
+  const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:v7:tasks', []))
+  const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:v7:completed', []))
+  const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:v7:prevTasks', []))
 
   const blobText = lines.filter(l => l.type === 'check').map(l => stripHtml(l.content)).filter(Boolean).join('\n')
 
   const updateLines = useCallback((newLines) => {
     setLines(newLines)
-    ssSet('demo:v6:lines', newLines)
+    ssSet('demo:v7:lines', newLines)
   }, [])
 
   const persistTasks = useCallback((tasks) => {
     setSavedTasks(tasks)
-    ssSet('demo:v6:tasks', tasks)
+    ssSet('demo:v7:tasks', tasks)
   }, [])
 
   const persistCompleted = useCallback((task) => {
     const done = { ...task, dateCompleted: new Date().toISOString() }
     setSavedCompleted(prev => {
       const updated = [...prev, done]
-      ssSet('demo:v6:completed', updated)
+      ssSet('demo:v7:completed', updated)
       return updated
     })
   }, [])
@@ -101,7 +100,7 @@ export function useSession() {
   const removeCompleted = useCallback((taskId) => {
     setSavedCompleted(prev => {
       const updated = prev.filter(t => t.id !== taskId)
-      ssSet('demo:v6:completed', updated)
+      ssSet('demo:v7:completed', updated)
       return updated
     })
   }, [])
@@ -110,25 +109,25 @@ export function useSession() {
     const idSet = new Set(ids)
     setSavedCompleted(prev => {
       const updated = prev.filter(t => !idSet.has(t.id))
-      ssSet('demo:v6:completed', updated)
+      ssSet('demo:v7:completed', updated)
       return updated
     })
   }, [])
 
   const persistPrevTasks = useCallback((tasks) => {
     setPrevSortedTasks(tasks)
-    ssSet('demo:v6:prevTasks', tasks)
+    ssSet('demo:v7:prevTasks', tasks)
   }, [])
 
   const persistPreSortBlob = useCallback((lines) => {
-    ssSet('demo:v6:preSortBlob', lines)
+    ssSet('demo:v7:preSortBlob', lines)
   }, [])
 
   const saveRule = useCallback((taskText, correctedCategory) => {
     const rule = { taskText, correctedCategory, dateAdded: new Date().toISOString() }
     setCategoryRules(prev => {
       const updated = [...prev.filter(r => r.taskText !== taskText), rule]
-      ssSet('demo:v6:rules', updated)
+      ssSet('demo:v7:rules', updated)
       return updated
     })
   }, [])
@@ -140,7 +139,7 @@ export function useSession() {
       const updated = id
         ? prev.map(n => n.id === id ? noteData : n)
         : [...prev, noteData]
-      ssSet('demo:v6:notes', updated)
+      ssSet('demo:v7:notes', updated)
       return updated
     })
     return Promise.resolve(noteId)
@@ -149,7 +148,7 @@ export function useSession() {
   const deleteNote = useCallback((id) => {
     setNotes(prev => {
       const updated = prev.filter(n => n.id !== id)
-      ssSet('demo:v6:notes', updated)
+      ssSet('demo:v7:notes', updated)
       return updated
     })
   }, [])
