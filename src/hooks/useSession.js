@@ -1,37 +1,37 @@
 import { useState, useCallback } from 'react'
 import { makeTextLine, makeCheckLine, makeBulletLine } from '../components/Blob'
 
-// Garfield as Spider-Man — lasagna first, then the city
+// Andrew Garfield's Spider-Man — Oscorp intern, skateboard, Gwen
 const DEMO_LINES = [
-  "fix the web shooters after my nap, the left one keeps jamming",
-  "hide the lasagna from Jon before he notices the mask on the floor",
-  "get Jameson the Spider-Man photos, no orange fur in the frame this time",
-  "stop the Vulture at the docks at 9pm, which is after lasagna",
-  "figure out how to tell Jon I am Spider-Man, or never, either works",
-  "make more web fluid, almost out after I webbed the lasagna pan shut",
-  "study for the chemistry midterm, the lasagna notes do not count",
-  "add a nap pocket to the suit, third draft, Jameson cannot see it",
-  "patch the suit from the Green Goblin fight, there is sauce on it too",
-  "unstick Odie from the ceiling, he thought the web was a toy",
-  "skip the Monday lecture, it is Monday",
-  "neighborhood watch after a three hour nap, maybe",
-  "restock lasagna, the important web fluid",
-  "what if every day was Sunday",
+  "fix the web shooters before Gwen's thing, the left one jammed on the way over",
+  "get the Oscorp lab photos to Jameson without him asking why I was on the ceiling",
+  "finish the biology writeup before Connors notices I redesigned the web fluid again",
+  "tell Gwen I am Spider-Man, or she already knows, either way show up on time",
+  "make more web fluid, the last batch was a little too sticky even for me",
+  "stop Connors before the Lizard thing reaches the bridge",
+  "call Aunt May, I missed dinner and she is going to use the full name",
+  "patch the suit, the skateboard wipeout did not help the Lizard tear",
+  "show up to Gwen's orchestra night, mask off, sit in the back",
+  "return Flash's homework, I webbed it to the locker by accident",
+  "scout a Midtown route that is not the clock tower this time",
+  "actually sleep tonight, more than three hours, as an experiment",
+  "think about what Uncle Ben would say, then just do the thing",
+  "put the skateboard somewhere Aunt May will not trip on it",
 ].map(text => makeCheckLine(text))
 
 const THINGS_I_LIKE_BODY = JSON.stringify([
-  makeBulletLine("lasagna at any temperature"),
-  makeBulletLine("a Monday that got cancelled"),
-  makeBulletLine("the nap between swings"),
-  makeBulletLine("when the web-shooter clicks and I can go back to sleep"),
-  makeBulletLine("Jon not noticing the mask"),
-  makeBulletLine("Odie falling for the fake laser, every time"),
-  makeBulletLine("rooftops, best seats, no people"),
-  makeBulletLine("orange fur on a red suit, it is a look"),
-  makeBulletLine("that first bite after patrol"),
-  makeBulletLine("the city at 2am when nobody can assign me a Monday"),
-  makeBulletLine("a leftover boxed just for me"),
-  makeBulletLine("nailing a swing and landing in a sunbeam"),
+  makeBulletLine("Gwen pretending she did not see the landing"),
+  makeBulletLine("the skateboard commute that is technically swinging"),
+  makeBulletLine("a web that holds on the first try"),
+  makeBulletLine("Oscorp at night when the labs are empty"),
+  makeBulletLine("Aunt May's meatloaf, even when I am late"),
+  makeBulletLine("the view from the clock tower"),
+  makeBulletLine("a formula that works on the second try"),
+  makeBulletLine("Midtown right after it rains"),
+  makeBulletLine("the rooftop we are not calling a date"),
+  makeBulletLine("nailing a swing and not hitting a water tower"),
+  makeBulletLine("old cameras that still click"),
+  makeBulletLine("when the mask comes off and she already knew"),
 ])
 
 const DEFAULT_NOTES = [
@@ -70,30 +70,30 @@ function stripHtml(html) {
 }
 
 export function useSession() {
-  const [lines, setLines] = useState(() => ssGet('demo:v5:lines', DEMO_LINES))
-  const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:v5:rules', []))
-  const [notes, setNotes] = useState(() => ssGet('demo:v5:notes', DEFAULT_NOTES))
-  const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:v5:tasks', []))
-  const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:v5:completed', []))
-  const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:v5:prevTasks', []))
+  const [lines, setLines] = useState(() => ssGet('demo:v6:lines', DEMO_LINES))
+  const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:v6:rules', []))
+  const [notes, setNotes] = useState(() => ssGet('demo:v6:notes', DEFAULT_NOTES))
+  const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:v6:tasks', []))
+  const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:v6:completed', []))
+  const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:v6:prevTasks', []))
 
   const blobText = lines.filter(l => l.type === 'check').map(l => stripHtml(l.content)).filter(Boolean).join('\n')
 
   const updateLines = useCallback((newLines) => {
     setLines(newLines)
-    ssSet('demo:v5:lines', newLines)
+    ssSet('demo:v6:lines', newLines)
   }, [])
 
   const persistTasks = useCallback((tasks) => {
     setSavedTasks(tasks)
-    ssSet('demo:v5:tasks', tasks)
+    ssSet('demo:v6:tasks', tasks)
   }, [])
 
   const persistCompleted = useCallback((task) => {
     const done = { ...task, dateCompleted: new Date().toISOString() }
     setSavedCompleted(prev => {
       const updated = [...prev, done]
-      ssSet('demo:v5:completed', updated)
+      ssSet('demo:v6:completed', updated)
       return updated
     })
   }, [])
@@ -101,7 +101,7 @@ export function useSession() {
   const removeCompleted = useCallback((taskId) => {
     setSavedCompleted(prev => {
       const updated = prev.filter(t => t.id !== taskId)
-      ssSet('demo:v5:completed', updated)
+      ssSet('demo:v6:completed', updated)
       return updated
     })
   }, [])
@@ -110,25 +110,25 @@ export function useSession() {
     const idSet = new Set(ids)
     setSavedCompleted(prev => {
       const updated = prev.filter(t => !idSet.has(t.id))
-      ssSet('demo:v5:completed', updated)
+      ssSet('demo:v6:completed', updated)
       return updated
     })
   }, [])
 
   const persistPrevTasks = useCallback((tasks) => {
     setPrevSortedTasks(tasks)
-    ssSet('demo:v5:prevTasks', tasks)
+    ssSet('demo:v6:prevTasks', tasks)
   }, [])
 
   const persistPreSortBlob = useCallback((lines) => {
-    ssSet('demo:v5:preSortBlob', lines)
+    ssSet('demo:v6:preSortBlob', lines)
   }, [])
 
   const saveRule = useCallback((taskText, correctedCategory) => {
     const rule = { taskText, correctedCategory, dateAdded: new Date().toISOString() }
     setCategoryRules(prev => {
       const updated = [...prev.filter(r => r.taskText !== taskText), rule]
-      ssSet('demo:v5:rules', updated)
+      ssSet('demo:v6:rules', updated)
       return updated
     })
   }, [])
@@ -140,7 +140,7 @@ export function useSession() {
       const updated = id
         ? prev.map(n => n.id === id ? noteData : n)
         : [...prev, noteData]
-      ssSet('demo:v5:notes', updated)
+      ssSet('demo:v6:notes', updated)
       return updated
     })
     return Promise.resolve(noteId)
@@ -149,7 +149,7 @@ export function useSession() {
   const deleteNote = useCallback((id) => {
     setNotes(prev => {
       const updated = prev.filter(n => n.id !== id)
-      ssSet('demo:v5:notes', updated)
+      ssSet('demo:v6:notes', updated)
       return updated
     })
   }, [])
