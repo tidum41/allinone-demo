@@ -1,21 +1,24 @@
 import { useState, useCallback } from 'react'
 import { makeTextLine, makeCheckLine, makeBulletLine } from '../components/Blob'
 
-// Andrew Garfield's Spider-Man — Oscorp intern, skateboard, Gwen
+// Pulled from my real to-do list
 const DEMO_LINES = [
-  "fix the web shooters before Gwen's thing, the left one jammed on the way over",
-  "get the Oscorp lab photos to Jameson without him asking why I was on the ceiling",
-  "finish the biology writeup before Connors notices I redesigned the web fluid again",
-  "make more web fluid, the last batch was a little too sticky even for me",
-  "stop Connors before the Lizard thing reaches the bridge",
-  "call Aunt May, I missed dinner and she is going to use the full name",
-  "patch the suit, the skateboard wipeout did not help the Lizard tear",
-  "show up to Gwen's orchestra night, mask off, sit in the back",
-  "return Flash's homework, I webbed it to the locker by accident",
-  "scout a Midtown route that is not the clock tower this time",
-  "actually sleep tonight, more than three hours, as an experiment",
-  "think about what Uncle Ben would say, then just do the thing",
-  "put the skateboard somewhere Aunt May will not trip on it",
+  "read Norman chapter 3 before UX class tomorrow",
+  "study for the Spanish quiz on Friday",
+  "finish the PsychoPy coding project",
+  "fill out the group formation survey for psych",
+  "add the FigJam board to the BruinLease case study",
+  "add an about section and PS3 sounds to my portfolio site",
+  "change resume to match my site's design system",
+  "edit campus magazine photos and send them over",
+  "sign up for intramurals",
+  "unpack the rest of my stuff from the car",
+  "order instax film",
+  "look for a standing desk",
+  "plan a birthday dinner for my girlfriend",
+  "check on my brother",
+  "look into masters programs",
+  "idea: notes that save the location, music, and weather from that day",
 ].map(text => makeCheckLine(text))
 
 const THINGS_I_LIKE_BODY = JSON.stringify([
