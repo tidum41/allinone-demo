@@ -172,6 +172,7 @@ export function MenuBar({
           onClick={onCategories}
           aria-label="Categories"
           aria-expanded={!!categoriesOpen}
+          aria-pressed={!!categoriesOpen}
           data-aio-categories
         >
           <CategoriesIcon />

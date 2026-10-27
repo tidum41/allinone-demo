@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   CATEGORY_COLORS,
@@ -7,25 +7,26 @@ import {
   sentenceCaseName,
   UNSORTED_NAME,
 } from '../lib/categories'
-import { MoreIcon, TrashIcon } from './icons'
+import { CloseIcon, MoreIcon, TrashIcon } from './icons'
 import styles from './CategoriesPanel.module.css'
 
 const MOBILE_MQ = '(max-width: 680px)'
+const PUSH_MQ = '(min-width: 1100px)'
 const MEDIUM_VH = 0.52
 const LARGE_VH = 0.92
 
-function useIsMobile() {
-  const [mobile, setMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(MOBILE_MQ).matches : false
+function useMedia(query) {
+  const [matches, setMatches] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false
   )
   useEffect(() => {
-    const mq = window.matchMedia(MOBILE_MQ)
-    const onChange = () => setMobile(mq.matches)
+    const mq = window.matchMedia(query)
+    const onChange = () => setMatches(mq.matches)
     onChange()
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
-  }, [])
-  return mobile
+  }, [query])
+  return matches
 }
 
 function autoSize(el) {
@@ -36,7 +37,6 @@ function autoSize(el) {
 
 export function CategoriesPanel({
   open,
-  anchorRef,
   categories,
   onChange,
   onReassignTasks,
@@ -46,12 +46,14 @@ export function CategoriesPanel({
   deleteToast,
   onDismissToast,
 }) {
-  const isMobile = useIsMobile()
+  const isMobile = useMedia(MOBILE_MQ)
+  const canPush = useMedia(PUSH_MQ)
+  const layout = isMobile ? 'sheet' : canPush ? 'push' : 'overlay'
+
   const [paletteId, setPaletteId] = useState(null)
   const [menuId, setMenuId] = useState(null)
   const [menuPos, setMenuPos] = useState(null)
   const [confirm, setConfirm] = useState(null)
-  const [panelPos, setPanelPos] = useState(null)
   const [detent, setDetent] = useState('medium') // medium | large
   const [sheetHeight, setSheetHeight] = useState(null)
   const [dragOffset, setDragOffset] = useState(0)
@@ -82,25 +84,6 @@ export function CategoriesPanel({
     const vh = window.innerHeight
     return Math.round(vh * (which === 'large' ? LARGE_VH : MEDIUM_VH))
   }, [])
-
-  const placePanel = useCallback(() => {
-    if (isMobile || !anchorRef?.current) return
-    const pill = anchorRef.current.getBoundingClientRect()
-    const width = Math.min(400, window.innerWidth - 24)
-    // Anchor right edge to the Categories pill's right edge
-    let left = pill.right - width
-    left = Math.max(12, Math.min(left, window.innerWidth - width - 12))
-    const top = pill.bottom + 8
-    setPanelPos({ top, left, width, right: pill.right })
-  }, [anchorRef, isMobile])
-
-  useLayoutEffect(() => {
-    if (!open) return
-    placePanel()
-    const onResize = () => placePanel()
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [open, placePanel])
 
   useEffect(() => {
     if (!open) {
@@ -293,12 +276,24 @@ export function CategoriesPanel({
     },
   })
 
-  if (!open && !deleteToast) return null
+  const showDesktopRail = !isMobile
+  if (!open && !deleteToast && !showDesktopRail) return null
 
-  const body = (
+  const body = (withClose) => (
     <>
       <header className={styles.header}>
         <h1 className={styles.title} data-aio-cat-title>Categories</h1>
+        {withClose && (
+          <button
+            type="button"
+            className={styles.closeBtn}
+            aria-label="Close categories"
+            data-aio-cat-close
+            onClick={onClose}
+          >
+            <CloseIcon />
+          </button>
+        )}
       </header>
       <p className={styles.purpose} data-aio-cat-purpose>
         Describe what goes in each category. Sort reads these lines to place your tasks.
@@ -457,48 +452,71 @@ export function CategoriesPanel({
 
   return (
     <>
-      {open && (
+      {isMobile && open && (
         <>
           <div
             className={styles.backdrop}
             onClick={onClose}
             aria-hidden="true"
           />
-          {isMobile ? (
+          <div
+            ref={sheetRef}
+            className={styles.sheet}
+            role="dialog"
+            aria-label="Categories"
+            data-aio-cat-layout="sheet"
+            style={{
+              height: sheetHeight ?? targetHeight('medium'),
+              transform: dragOffset ? `translateY(${dragOffset}px)` : undefined,
+            }}
+          >
             <div
-              ref={sheetRef}
-              className={styles.sheet}
-              role="dialog"
-              aria-label="Categories"
-              style={{
-                height: sheetHeight ?? targetHeight('medium'),
-                transform: dragOffset ? `translateY(${dragOffset}px)` : undefined,
-              }}
+              className={styles.grabberWrap}
+              aria-hidden="true"
+              onPointerDown={onGrabberPointerDown}
+              onPointerMove={onGrabberPointerMove}
+              onPointerUp={onGrabberPointerUp}
+              onPointerCancel={onGrabberPointerUp}
             >
-              <div
-                className={styles.grabberWrap}
-                aria-hidden="true"
-                onPointerDown={onGrabberPointerDown}
-                onPointerMove={onGrabberPointerMove}
-                onPointerUp={onGrabberPointerUp}
-                onPointerCancel={onGrabberPointerUp}
-              >
-                <div className={styles.grabber} />
-              </div>
-              {body}
+              <div className={styles.grabber} />
             </div>
-          ) : (
-            panelPos && (
-              <div
-                className={styles.panel}
-                role="dialog"
-                aria-label="Categories"
-                style={{ top: panelPos.top, left: panelPos.left, width: panelPos.width }}
-              >
-                {body}
-              </div>
-            )
-          )}
+            {body(false)}
+          </div>
+        </>
+      )}
+
+      {showDesktopRail && layout === 'push' && (
+        <div
+          className={`${styles.railSlot} ${open ? styles.railSlotOpen : ''}`}
+          aria-hidden={!open}
+        >
+          <aside
+            className={styles.rail}
+            role={open ? 'dialog' : undefined}
+            aria-label={open ? 'Categories' : undefined}
+            data-aio-cat-layout="push"
+            {...(!open ? { inert: '' } : {})}
+          >
+            {open ? body(true) : null}
+          </aside>
+        </div>
+      )}
+
+      {showDesktopRail && layout === 'overlay' && open && (
+        <>
+          <div
+            className={styles.overlayScrim}
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          <aside
+            className={`${styles.rail} ${styles.railOverlay}`}
+            role="dialog"
+            aria-label="Categories"
+            data-aio-cat-layout="overlay"
+          >
+            {body(true)}
+          </aside>
         </>
       )}
 

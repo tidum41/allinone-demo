@@ -161,23 +161,85 @@ a {
   }
 }
 
-/* Content column — fills remaining space, scrolls independently */
+/* Content column — fills remaining space */
 .contentCol {
   flex: 1;
   min-width: 0;        /* prevents flex overflow */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior-y: none;
+}
+
+/* Main workspace: toolbar strip + (task list | categories rail) */
+.workspace {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toolbar spans full width; main content stays in the centered app column.
+   A right gutter mirrors the 360px rail so the pill/title stay aligned with tasks. */
+.toolbarStrip {
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.toolbarMain {
+  flex: 1;
+  min-width: 0;
+  transition: flex-basis 200ms ease-out;
+}
+
+.toolbarRailGutter {
+  flex-shrink: 0;
+  width: 0;
+  transition: width 200ms ease-out;
+}
+
+/* Only push the gutter when the viewport can host the rail (≥1100). */
+@media (min-width: 1100px) {
+  .toolbarStripCatOpen .toolbarRailGutter {
+    width: 360px;
+  }
+}
+
+@media (max-width: 680px) {
+  .toolbarRailGutter {
+    display: none;
+  }
+}
+
+.workspaceBody {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  overflow: hidden;
+}
+
+.mainPane {
+  flex: 1;
+  min-width: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   overscroll-behavior-y: none;
-  /* hide scrollbar so it doesn't bleed over sticky menubar */
   scrollbar-width: none;
 }
 
-.contentCol::-webkit-scrollbar {
+.mainPane::-webkit-scrollbar {
   display: none;
 }
 
-/* App — centered within content column */
+/* App — centered within the main pane */
 .app {
   max-width: 680px;
   width: 100%;

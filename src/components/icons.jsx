@@ -121,3 +121,12 @@ export function PlusIcon() {
     </svg>
   )
 }
+
+/** Close mark for Categories rail header */
+export function CloseIcon() {
+  return (
+    <svg {...svgProps}>
+      <path d="M4 4l8 8M12 4l-8 8" {...stroke} />
+    </svg>
+  )
+}

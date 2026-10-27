@@ -10,35 +10,68 @@
   animation: fadeIn 160ms ease;
 }
 
+.overlayScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.12);
+  animation: fadeIn 200ms ease-out;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.panel {
+/* Desktop push slot — width animates so the task list shifts left */
+.railSlot {
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+  align-self: stretch;
+  transition: width 200ms ease-out;
+}
+
+.railSlotOpen {
+  width: 360px;
+}
+
+/* Shared desktop rail surface */
+.rail {
   --cat-pad: 16px;
   --cat-gutter: 16px;
   --cat-gap: 10px;
   --cat-text-inset: 42px;
-  position: fixed;
-  z-index: 190;
+  box-sizing: border-box;
+  width: 360px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    0 12px 40px rgba(0, 0, 0, 0.14);
-  max-height: 70vh;
-  width: min(400px, calc(100vw - 24px));
+  border-left: 1px solid var(--color-border);
   overflow: hidden;
-  animation: panelIn 160ms cubic-bezier(0.2, 0, 0, 1);
+  transform: translateX(100%);
+  transition: transform 200ms ease-out;
 }
 
-@keyframes panelIn {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+.railSlotOpen .rail {
+  transform: translateX(0);
+}
+
+/* Narrow desktop: overlay from the right (does not push) */
+.railOverlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  transform: translateX(0);
+  animation: railSlideIn 200ms ease-out;
+}
+
+@keyframes railSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 .sheet {
@@ -83,6 +116,7 @@
 .header {
   display: flex;
   align-items: center;
+  gap: 8px;
   min-height: 44px;
   padding: 12px var(--cat-pad) 4px var(--cat-text-inset);
   flex-shrink: 0;
@@ -91,11 +125,32 @@
 .title {
   margin: 0;
   flex: 1;
+  min-width: 0;
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   letter-spacing: -0.01em;
   text-align: left;
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  margin-right: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.closeBtn:hover,
+.closeBtn:focus-visible {
+  color: var(--color-text-primary);
+  background: var(--color-border);
 }
 
 .purpose {
@@ -257,7 +312,7 @@
   border: 1px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  animation: panelIn 120ms ease;
+  animation: fadeIn 120ms ease;
 }
 
 .menuItem {
@@ -427,7 +482,9 @@
 }
 
 @media (max-width: 680px) {
-  .panel {
+  .railSlot,
+  .rail,
+  .overlayScrim {
     display: none;
   }
 
@@ -479,6 +536,25 @@
   }
 
   .backdrop {
-    background: transparent;
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .railSlot,
+  .rail,
+  .railOverlay,
+  .overlayScrim,
+  .backdrop {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .rail {
+    transform: none;
+  }
+
+  .railSlot:not(.railSlotOpen) .rail {
+    visibility: hidden;
   }
 }

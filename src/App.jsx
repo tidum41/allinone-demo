@@ -409,7 +409,6 @@ export default function App() {
       )}
 
       <div className="contentCol">
-      <div className="app">
 
       {view === VIEW_NOTE_EDITOR ? (
         <NoteEditor
@@ -422,93 +421,104 @@ export default function App() {
           isSidebarOpen={sidebarOpen}
         />
       ) : (
-        <>
-          <MenuBar
-            onSidebarOpen={toggleSidebar}
-            onSort={handleSort}
-            onCategories={() => setCategoriesOpen(v => !v)}
-            categoriesOpen={categoriesOpen}
-            categoriesBtnRef={categoriesBtnRef}
-            onSummary={() => setShowSummary(true)}
-            onChecklist={() => blobRef.current?.toggleChecklist()}
-            onBullet={() => blobRef.current?.toggleBullet()}
-            onUndo={handleUndo}
-            isSidebarOpen={sidebarOpen}
-            loading={loading}
-            sortDone={sortDone}
-            title="All in one"
-            onFormat={(type) => blobRef.current?.format(type)}
-            activeLineType={activeLineType}
-          />
-
-          <Blob
-            ref={blobRef}
-            lines={lines}
-            onChange={updateLines}
-            onBeforeLineDelete={handleBeforeLineDelete}
-            onLineTypeChange={setActiveLineType}
-            disabled={!blobLoaded}
-          />
-
-          <CategoriesGuide onEdit={() => setCategoriesOpen(true)} />
-
-          {loading && <SkeletonLoader />}
-
-          {!loading && error && (
-            <div style={{ padding: 'var(--space-md) var(--space-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-placeholder)', flex: 1 }}>
-                {error}
-              </span>
-              <button
-                onClick={handleSort}
-                style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', padding: '0 var(--space-sm)', minHeight: '32px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-              >
-                Retry
-              </button>
+        <div className="workspace">
+          <div className={`toolbarStrip${categoriesOpen ? ' toolbarStripCatOpen' : ''}`}>
+            <div className="toolbarMain">
+              <div className="app">
+                <MenuBar
+                  onSidebarOpen={toggleSidebar}
+                  onSort={handleSort}
+                  onCategories={() => setCategoriesOpen(v => !v)}
+                  categoriesOpen={categoriesOpen}
+                  categoriesBtnRef={categoriesBtnRef}
+                  onSummary={() => setShowSummary(true)}
+                  onChecklist={() => blobRef.current?.toggleChecklist()}
+                  onBullet={() => blobRef.current?.toggleBullet()}
+                  onUndo={handleUndo}
+                  isSidebarOpen={sidebarOpen}
+                  loading={loading}
+                  sortDone={sortDone}
+                  title="All in one"
+                  onFormat={(type) => blobRef.current?.format(type)}
+                  activeLineType={activeLineType}
+                />
+              </div>
             </div>
-          )}
+            <div className="toolbarRailGutter" aria-hidden="true" />
+          </div>
 
-          {!loading && sorted && (
-            <SortedView
-              tasks={tasks}
+          <div className="workspaceBody">
+            <div className="mainPane">
+              <div className="app">
+                <Blob
+                  ref={blobRef}
+                  lines={lines}
+                  onChange={updateLines}
+                  onBeforeLineDelete={handleBeforeLineDelete}
+                  onLineTypeChange={setActiveLineType}
+                  disabled={!blobLoaded}
+                />
+
+                <CategoriesGuide onEdit={() => setCategoriesOpen(true)} />
+
+                {loading && <SkeletonLoader />}
+
+                {!loading && error && (
+                  <div style={{ padding: 'var(--space-md) var(--space-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-placeholder)', flex: 1 }}>
+                      {error}
+                    </span>
+                    <button
+                      onClick={handleSort}
+                      style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', padding: '0 var(--space-sm)', minHeight: '32px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                {!loading && sorted && (
+                  <SortedView
+                    tasks={tasks}
+                    categories={categories}
+                    completingItems={completingItems}
+                    onComplete={handleComplete}
+                    onPriorityChange={handlePriorityChange}
+                    onCategoryChange={handleCategoryChange}
+                    onTextChange={handleTextChange}
+                    onAddAfter={handleAddAfter}
+                    newTaskId={newTaskId}
+                    onDeleteSelected={handleDeleteTasks}
+                    completedTasks={savedCompleted}
+                    onUncheck={handleUncheck}
+                    completedSectionRef={completedSectionRef}
+                  />
+                )}
+
+                {showSummary && (
+                  <SummaryPanel tasks={tasks} onClose={() => setShowSummary(false)} />
+                )}
+              </div>
+            </div>
+
+            <CategoriesPanel
+              open={categoriesOpen}
               categories={categories}
-              completingItems={completingItems}
-              onComplete={handleComplete}
-              onPriorityChange={handlePriorityChange}
-              onCategoryChange={handleCategoryChange}
-              onTextChange={handleTextChange}
-              onAddAfter={handleAddAfter}
-              newTaskId={newTaskId}
-              onDeleteSelected={handleDeleteTasks}
-              completedTasks={savedCompleted}
-              onUncheck={handleUncheck}
-              completedSectionRef={completedSectionRef}
+              onChange={persistCategories}
+              onReassignTasks={handleReassignTasks}
+              onClose={() => setCategoriesOpen(false)}
+              onDeleted={handleCategoryDeleted}
+              onUndoDelete={handleUndoCategoryDelete}
+              deleteToast={deleteToast}
+              onDismissToast={() => {
+                setDeleteToast(null)
+                clearTimeout(deleteToastTimerRef.current)
+              }}
             />
-          )}
-
-          {showSummary && (
-            <SummaryPanel tasks={tasks} onClose={() => setShowSummary(false)} />
-          )}
-        </>
+          </div>
+        </div>
       )}
 
-      <CategoriesPanel
-        open={categoriesOpen}
-        anchorRef={categoriesBtnRef}
-        categories={categories}
-        onChange={persistCategories}
-        onReassignTasks={handleReassignTasks}
-        onClose={() => setCategoriesOpen(false)}
-        onDeleted={handleCategoryDeleted}
-        onUndoDelete={handleUndoCategoryDelete}
-        deleteToast={deleteToast}
-        onDismissToast={() => {
-          setDeleteToast(null)
-          clearTimeout(deleteToastTimerRef.current)
-        }}
-      />
-
-      </div>
       </div>
       {import.meta.env.DEV && <Agentation />}
     </div>
