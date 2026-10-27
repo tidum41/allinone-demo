@@ -101,7 +101,7 @@ async function main() {
     await shot(page, dirs, `1440-${theme}-hover-badge`)
     report.shots.push(`1440-${theme}-hover-badge`)
 
-    // Pressed (mouse down)
+    // Pressed (mouse down only — avoid click toggle)
     const box = await badge.boundingBox()
     if (box) {
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
@@ -110,6 +110,11 @@ async function main() {
       await shot(page, dirs, `1440-${theme}-pressed-badge`)
       report.shots.push(`1440-${theme}-pressed-badge`)
       await page.mouse.up()
+      // mouseup may fire click and open the menu — close it
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(100)
+      await page.evaluate(() => document.body.click())
+      await page.waitForTimeout(80)
     }
 
     // Focus categories pill
@@ -119,6 +124,8 @@ async function main() {
     report.shots.push(`1440-${theme}-focus-categories`)
 
     // Menu open
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(60)
     await badge.click()
     await page.waitForSelector('[data-aio-popover-menu][data-menu="priority"]', { timeout: 5000 })
     await page.waitForTimeout(180)
@@ -132,8 +139,8 @@ async function main() {
     await check.scrollIntoViewIfNeeded()
     const mid = page.waitForFunction(
       () => {
-        const el = document.querySelector('.taskRow.completing [data-aio-checkbox], .completing [data-aio-checkbox]')
-        return !!el
+        const row = document.querySelector('.taskRow[class*="completing"]')
+        return !!row
       },
       null,
       { timeout: 3000 }
