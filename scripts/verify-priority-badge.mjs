@@ -103,13 +103,18 @@ function colorsEqual(a, b) {
 /** Ring uses currentColor at ~35–45% alpha (color-mix). */
 function ringAlphaOk(boxShadow, labelColor) {
   if (!boxShadow || !boxShadow.includes('inset')) return false
+  // Chromium may report color-mix as color(srgb r g b / a) or rgba(...)
+  const srgb = boxShadow.match(/color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\/\s*([\d.]+)\)/)
+  if (srgb) {
+    const alpha = parseFloat(srgb[4])
+    if (!(alpha >= 0.35 && alpha <= 0.45)) return false
+    const ringRgb = `rgb(${Math.round(parseFloat(srgb[1]) * 255)}, ${Math.round(parseFloat(srgb[2]) * 255)}, ${Math.round(parseFloat(srgb[3]) * 255)})`
+    return colorsEqual(ringRgb, labelColor)
+  }
   const m = boxShadow.match(/rgba?\(([^)]+)\)/)
   if (!m) return false
   const parts = m[1].split(',').map((s) => s.trim())
-  if (parts.length < 4) {
-    // solid rgb inset — reject (we want alpha mix)
-    return false
-  }
+  if (parts.length < 4) return false
   const alpha = parseFloat(parts[3])
   if (!(alpha >= 0.35 && alpha <= 0.45)) return false
   const ringRgb = `rgb(${parts[0]}, ${parts[1]}, ${parts[2]})`
