@@ -24,16 +24,15 @@ export function SidebarIcon() {
   )
 }
 
-/** Tag/label mark for Categories — two offset tags, Things/Linear spirit */
+/** Tag mark for Categories — price-tag silhouette with hole, Things/Linear spirit */
 export function CategoriesIcon() {
   return (
     <svg {...svgProps}>
       <path
-        d="M2.5 3.25h5.1L12.5 8.15a1.1 1.1 0 0 1 0 1.55l-2.8 2.8a1.1 1.1 0 0 1-1.55 0L3.25 7.6V3.25z"
+        d="M2.75 3h4.85l5.9 5.9a1.35 1.35 0 0 1 0 1.9l-3.2 3.2a1.35 1.35 0 0 1-1.9 0L2.75 7.85V3z"
         {...stroke}
       />
-      <circle cx="5.35" cy="5.35" r="0.85" fill="currentColor" />
-      <path d="M7.75 3.1h3.2L13.5 5.65" {...stroke} />
+      <circle cx="5.6" cy="5.6" r="1" fill="currentColor" />
     </svg>
   )
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   CATEGORY_COLORS,
   makeCategoryId,
@@ -48,6 +49,7 @@ export function CategoriesPanel({
   const isMobile = useIsMobile()
   const [paletteId, setPaletteId] = useState(null)
   const [menuId, setMenuId] = useState(null)
+  const [menuPos, setMenuPos] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [panelPos, setPanelPos] = useState(null)
   const [detent, setDetent] = useState('medium') // medium | large
@@ -57,6 +59,24 @@ export function CategoriesPanel({
   const sheetRef = useRef(null)
   const dragRef = useRef(null)
   const nameRefs = useRef({})
+  const moreBtnRefs = useRef({})
+
+  const openMenu = useCallback((id) => {
+    const btn = moreBtnRefs.current[id]
+    if (!btn) {
+      setMenuId(id)
+      return
+    }
+    const r = btn.getBoundingClientRect()
+    const menuH = categories.length > 1 ? 80 : 44
+    const top = r.bottom + 4 + menuH > window.innerHeight
+      ? Math.max(8, r.top - menuH - 4)
+      : r.bottom + 4
+    const left = Math.max(8, r.right - 132)
+    setMenuPos({ top, left })
+    setMenuId(id)
+    setPaletteId(null)
+  }, [categories.length])
 
   const targetHeight = useCallback((which) => {
     const vh = window.innerHeight
@@ -88,6 +108,7 @@ export function CategoriesPanel({
     if (!open) {
       setPaletteId(null)
       setMenuId(null)
+      setMenuPos(null)
       setConfirm(null)
       setSwipeX({})
       setDetent('medium')
@@ -152,8 +173,24 @@ export function CategoriesPanel({
   const requestDelete = (cat) => {
     if (categories.length <= 1) return
     setMenuId(null)
+    setMenuPos(null)
     setConfirm({ id: cat.id, name: cat.name })
   }
+
+  useEffect(() => {
+    if (!menuId) return
+    const onDown = (e) => {
+      if (e.target.closest?.('[data-aio-cat-menu]') || e.target.closest?.('[data-aio-cat-more]')) return
+      setMenuId(null)
+      setMenuPos(null)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('touchstart', onDown, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('touchstart', onDown)
+    }
+  }, [menuId])
 
   const performDelete = () => {
     if (!confirm) return
@@ -291,8 +328,7 @@ export function CategoriesPanel({
                 {...bindSwipe(cat.id)}
                 onContextMenu={(e) => {
                   e.preventDefault()
-                  setMenuId(cat.id)
-                  setPaletteId(null)
+                  openMenu(cat.id)
                 }}
               >
                 <button
@@ -363,40 +399,18 @@ export function CategoriesPanel({
                     aria-expanded={menuId === cat.id}
                     aria-haspopup="menu"
                     data-aio-cat-more
+                    ref={(el) => { moreBtnRefs.current[cat.id] = el }}
                     onClick={() => {
-                      setMenuId((v) => (v === cat.id ? null : cat.id))
-                      setPaletteId(null)
+                      if (menuId === cat.id) {
+                        setMenuId(null)
+                        setMenuPos(null)
+                      } else {
+                        openMenu(cat.id)
+                      }
                     }}
                   >
                     <MoreIcon />
                   </button>
-                  {menuId === cat.id && (
-                    <div className={styles.menu} role="menu">
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className={styles.menuItem}
-                        onClick={() => {
-                          setMenuId(null)
-                          setPaletteId(cat.id)
-                          nameRefs.current[cat.id]?.focus()
-                        }}
-                      >
-                        Edit
-                      </button>
-                      {categories.length > 1 && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                          onClick={() => requestDelete(cat)}
-                        >
-                          <span className={styles.menuIcon}><TrashIcon /></span>
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -489,6 +503,45 @@ export function CategoriesPanel({
             )
           )}
         </>
+      )}
+
+      {menuId && menuPos && createPortal(
+        <div
+          className={styles.menuPortal}
+          role="menu"
+          data-aio-cat-menu
+          style={{ top: menuPos.top, left: menuPos.left }}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.menuItem}
+            onClick={() => {
+              const id = menuId
+              setMenuId(null)
+              setMenuPos(null)
+              setPaletteId(id)
+              nameRefs.current[id]?.focus()
+            }}
+          >
+            Edit
+          </button>
+          {categories.length > 1 && (
+            <button
+              type="button"
+              role="menuitem"
+              className={`${styles.menuItem} ${styles.menuItemDanger}`}
+              onClick={() => {
+                const cat = categories.find((c) => c.id === menuId)
+                if (cat) requestDelete(cat)
+              }}
+            >
+              <span className={styles.menuIcon}><TrashIcon /></span>
+              Delete
+            </button>
+          )}
+        </div>,
+        document.body
       )}
 
       {deleteToast && (
