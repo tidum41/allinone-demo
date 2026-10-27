@@ -195,7 +195,7 @@ export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onText
       onPointerCancel={cancelLongPress}
       onPointerLeave={cancelLongPress}
     >
-      <button className={styles.checkbox} onClick={handleCheck} aria-label="Complete task" onPointerDown={e => e.currentTarget.releasePointerCapture(e.pointerId)}>
+      <button className={styles.checkbox} data-aio-checkbox onClick={handleCheck} aria-label="Complete task" onPointerDown={e => e.currentTarget.releasePointerCapture(e.pointerId)}>
         {effectiveCompleting && (
           <svg className={styles.checkTick} viewBox="0 0 16 16" fill="none">
             <path d="M3.5 8.5l3 3 6-7" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>

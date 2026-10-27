@@ -1,16 +1,12 @@
 import { useEffect, useState } from 'react'
+import { NotebookIcon, NoteIcon, PlusIcon } from './icons'
 import styles from './Sidebar.module.css'
-
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
 
 function MoonIcon() {
   return (
-    <svg width="16" height="16" viewBox="-2 -2 20 20" fill="none" overflow="visible">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
-        d="M14 10.8A7 7 0 0 1 5.2 2 7 7 0 1 0 14 10.8z"
+        d="M12.75 10.1A5.75 5.75 0 0 1 5.9 3.25 5.75 5.75 0 1 0 12.75 10.1z"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
@@ -22,16 +18,16 @@ function MoonIcon() {
 
 function SunIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-      <line x1="8" y1="1" x2="8" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="1" y1="8" x2="3" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="13" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="3.05" y1="3.05" x2="4.46" y2="4.46" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="11.54" y1="11.54" x2="12.95" y2="12.95" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="12.95" y1="3.05" x2="11.54" y2="4.46" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="4.46" y1="11.54" x2="3.05" y2="12.95" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="8" y1="1.5" x2="8" y2="3.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="8" y1="12.75" x2="8" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="1.5" y1="8" x2="3.25" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="12.75" y1="8" x2="14.5" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="3.2" y1="3.2" x2="4.4" y2="4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="11.6" y1="11.6" x2="12.8" y2="12.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="12.8" y1="3.2" x2="11.6" y2="4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="4.4" y1="11.6" x2="3.2" y2="12.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -58,14 +54,15 @@ export function Sidebar({ open, onClose, notes, onSelectNote, onCreate, onSelect
     <nav className={styles.sidebar} aria-label="Notes" aria-hidden={!open}>
         <div className={styles.inner}>
           <button className={styles.mainEntry} onClick={() => { onSelectMain(); onClose() }}>
-            <span className={styles.mainEntryTitle}>all in one</span>
+            <span className={styles.entryIcon}><NotebookIcon /></span>
+            <span className={styles.mainEntryTitle}>All in one</span>
           </button>
 
           <div className={styles.divider} />
 
           <div className={styles.notesList}>
             {notes.length === 0 ? (
-              <p className={styles.empty}>no other notes yet.</p>
+              <p className={styles.empty}>No other notes yet.</p>
             ) : (
               notes.map(note => (
                 <button
@@ -73,7 +70,8 @@ export function Sidebar({ open, onClose, notes, onSelectNote, onCreate, onSelect
                   className={styles.noteItem}
                   onClick={() => { onSelectNote(note); onClose() }}
                 >
-                  <span className={styles.noteTitle}>{note.title || 'untitled'}</span>
+                  <span className={styles.entryIcon}><NoteIcon /></span>
+                  <span className={styles.noteTitle}>{note.title || 'Untitled'}</span>
                 </button>
               ))
             )}
@@ -82,11 +80,8 @@ export function Sidebar({ open, onClose, notes, onSelectNote, onCreate, onSelect
 
         <div className={styles.footer}>
           <button className={styles.newBtn} onClick={() => { onCreate(); onClose() }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <line x1="7" y1="1" x2="7" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            new note
+            <PlusIcon />
+            New note
           </button>
 
           <button className={styles.themeBtn} onClick={toggleTheme} aria-label="Toggle dark mode">

@@ -87,6 +87,7 @@ const BlobLine = forwardRef(function BlobLine(
           onClick={onToggleCheck}
           aria-label={line.checked ? 'Uncheck' : 'Check'}
           tabIndex={-1}
+          data-aio-checkbox
           onPointerDown={e => e.currentTarget.releasePointerCapture(e.pointerId)}
         />
       )}

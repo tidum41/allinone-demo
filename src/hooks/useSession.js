@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { makeTextLine, makeCheckLine, makeBulletLine } from '../components/Blob'
+import { DEFAULT_CATEGORIES, normalizeCategories } from '../lib/categories'
 
 // Pulled from my real to-do list
 const DEMO_LINES = [
@@ -72,30 +73,39 @@ function stripHtml(html) {
 }
 
 export function useSession() {
-  const [lines, setLines] = useState(() => ssGet('demo:v7:lines', DEMO_LINES))
-  const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:v7:rules', []))
-  const [notes, setNotes] = useState(() => ssGet('demo:v7:notes', DEFAULT_NOTES))
-  const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:v7:tasks', []))
-  const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:v7:completed', []))
-  const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:v7:prevTasks', []))
+  const [lines, setLines] = useState(() => ssGet('demo:v11:lines', DEMO_LINES))
+  const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:v11:rules', []))
+  const [categories, setCategories] = useState(() =>
+    normalizeCategories(ssGet('demo:v11:categories', DEFAULT_CATEGORIES))
+  )
+  const [notes, setNotes] = useState(() => ssGet('demo:v11:notes', DEFAULT_NOTES))
+  const [savedTasks, setSavedTasks] = useState(() => ssGet('demo:v11:tasks', []))
+  const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:v11:completed', []))
+  const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:v11:prevTasks', []))
 
   const blobText = lines.filter(l => l.type === 'check').map(l => stripHtml(l.content)).filter(Boolean).join('\n')
 
   const updateLines = useCallback((newLines) => {
     setLines(newLines)
-    ssSet('demo:v7:lines', newLines)
+    ssSet('demo:v11:lines', newLines)
+  }, [])
+
+  const persistCategories = useCallback((next) => {
+    const normalized = normalizeCategories(next)
+    setCategories(normalized)
+    ssSet('demo:v11:categories', normalized)
   }, [])
 
   const persistTasks = useCallback((tasks) => {
     setSavedTasks(tasks)
-    ssSet('demo:v7:tasks', tasks)
+    ssSet('demo:v11:tasks', tasks)
   }, [])
 
   const persistCompleted = useCallback((task) => {
     const done = { ...task, dateCompleted: new Date().toISOString() }
     setSavedCompleted(prev => {
       const updated = [...prev, done]
-      ssSet('demo:v7:completed', updated)
+      ssSet('demo:v11:completed', updated)
       return updated
     })
   }, [])
@@ -103,7 +113,7 @@ export function useSession() {
   const removeCompleted = useCallback((taskId) => {
     setSavedCompleted(prev => {
       const updated = prev.filter(t => t.id !== taskId)
-      ssSet('demo:v7:completed', updated)
+      ssSet('demo:v11:completed', updated)
       return updated
     })
   }, [])
@@ -112,25 +122,25 @@ export function useSession() {
     const idSet = new Set(ids)
     setSavedCompleted(prev => {
       const updated = prev.filter(t => !idSet.has(t.id))
-      ssSet('demo:v7:completed', updated)
+      ssSet('demo:v11:completed', updated)
       return updated
     })
   }, [])
 
   const persistPrevTasks = useCallback((tasks) => {
     setPrevSortedTasks(tasks)
-    ssSet('demo:v7:prevTasks', tasks)
+    ssSet('demo:v11:prevTasks', tasks)
   }, [])
 
   const persistPreSortBlob = useCallback((lines) => {
-    ssSet('demo:v7:preSortBlob', lines)
+    ssSet('demo:v11:preSortBlob', lines)
   }, [])
 
   const saveRule = useCallback((taskText, correctedCategory) => {
     const rule = { taskText, correctedCategory, dateAdded: new Date().toISOString() }
     setCategoryRules(prev => {
       const updated = [...prev.filter(r => r.taskText !== taskText), rule]
-      ssSet('demo:v7:rules', updated)
+      ssSet('demo:v11:rules', updated)
       return updated
     })
   }, [])
@@ -142,7 +152,7 @@ export function useSession() {
       const updated = id
         ? prev.map(n => n.id === id ? noteData : n)
         : [...prev, noteData]
-      ssSet('demo:v7:notes', updated)
+      ssSet('demo:v11:notes', updated)
       return updated
     })
     return Promise.resolve(noteId)
@@ -151,7 +161,7 @@ export function useSession() {
   const deleteNote = useCallback((id) => {
     setNotes(prev => {
       const updated = prev.filter(n => n.id !== id)
-      ssSet('demo:v7:notes', updated)
+      ssSet('demo:v11:notes', updated)
       return updated
     })
   }, [])
@@ -159,6 +169,7 @@ export function useSession() {
   return {
     lines, updateLines, blobText, blobLoaded: true,
     categoryRules, saveRule,
+    categories, persistCategories,
     notes, saveNote, deleteNote,
     savedTasks, tasksLoaded: true, persistTasks,
     savedCompleted, persistCompleted, removeCompleted, pruneCompleted,

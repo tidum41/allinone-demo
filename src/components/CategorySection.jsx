@@ -5,7 +5,7 @@ import styles from './CategorySection.module.css'
 const PRIORITY_ORDER = { Urgent: 0, Soon: 1, Eventually: 2 }
 
 export function CategorySection({
-  category, tasks,
+  category, color, tasks,
   onComplete, onPriorityChange, onCategoryChange, onTextChange, onAddAfter,
   onDeleteSelected,
   // completing animation props
@@ -115,7 +115,8 @@ export function CategorySection({
       className={`${styles.section} ${isDragTarget ? styles.dragTarget : ''}`}
     >
       <div className={styles.header} onClick={toggle}>
-        <span className={styles.name}>{category.toLowerCase()}</span>
+        {color && <span className={styles.dot} style={{ background: color }} aria-hidden="true" />}
+        <span className={styles.name}>{category}</span>
         <span className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}>
           <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
             <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

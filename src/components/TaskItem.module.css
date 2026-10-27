@@ -7,13 +7,19 @@
   display: flex;
   align-items: flex-start;
   gap: 0;
-  min-height: 44px;
+  min-height: 32px;
   cursor: text;
   animation: taskIn 180ms ease-out both;
   transition: opacity var(--transition-normal), background var(--transition-fast), transform var(--transition-fast);
   border-radius: 8px;
   user-select: none;
   touch-action: none;
+}
+
+@media (max-width: 680px) {
+  .item {
+    min-height: 44px;
+  }
 }
 
 /* ── Completion sequence ──────────────────────────────────────────── */
@@ -107,8 +113,14 @@
   background: transparent;
   transition: background var(--transition-fast), border-color var(--transition-fast);
   flex-shrink: 0;
-  margin-top: 15px;
+  margin-top: 8px;
   margin-right: 10px;
+}
+
+@media (max-width: 680px) {
+  .checkbox {
+    margin-top: 14px;
+  }
 }
 
 .checkbox:active {
@@ -116,12 +128,17 @@
   border-color: var(--color-text-secondary);
 }
 
-/* textWrap padding (44-22.5)/2 ≈ 11px centers single-line text in the 44px row */
 .textWrap {
   flex: 1;
   min-width: 0;
   cursor: text;
-  padding: 10px 0;
+  padding: 3px 0;
+}
+
+@media (max-width: 680px) {
+  .textWrap {
+    padding: 10px 0;
+  }
 }
 
 .text {
@@ -148,11 +165,15 @@
   word-break: break-word;
 }
 
-/* Priority badge: padding-top matches textWrap so badge top aligns with text start.
-   Badge height (~22px) then centers it on the first line, same level as the checkbox. */
 .priorityWrap {
   display: flex;
   align-items: flex-start;
   flex-shrink: 0;
-  padding: 12px 2px 0;
+  padding: 5px 2px 0;
+}
+
+@media (max-width: 680px) {
+  .priorityWrap {
+    padding: 12px 2px 0;
+  }
 }
