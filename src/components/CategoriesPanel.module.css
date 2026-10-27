@@ -302,55 +302,6 @@
   background: var(--color-border);
 }
 
-.menuPortal {
-  position: fixed;
-  z-index: 240;
-  min-width: 132px;
-  padding: 4px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  animation: fadeIn 120ms ease;
-}
-
-.menuItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: 6px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-  text-align: left;
-}
-
-.menuItem:hover,
-.menuItem:focus-visible {
-  background: var(--color-border);
-}
-
-.menuItemDanger {
-  color: var(--color-text-secondary);
-}
-
-.menuItemDanger:hover,
-.menuItemDanger:focus-visible {
-  color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
-}
-
-.menuItemDanger .menuIcon {
-  color: inherit;
-}
-
-.menuIcon {
-  display: flex;
-  color: var(--color-text-secondary);
-}
-
 .palette {
   display: flex;
   flex-wrap: wrap;
