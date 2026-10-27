@@ -46,18 +46,21 @@ async function measureMain(page) {
     const checkbox = document.querySelector('[data-aio-checkbox]')
     const sidebarSvg = document.querySelector('[data-aio-sidebar-toggle] svg')
     const title = document.querySelector('[data-aio-title]')
-    const taskText = checkbox?.parentElement?.querySelector('[contenteditable], .text, textarea')
-      || document.querySelector('[contenteditable]')
-    // For blob lines: text is sibling of checkbox
     const line = checkbox?.closest('[class*="line"]')
     const lineText = line?.querySelector('[contenteditable]')
     return {
       checkbox: box(checkbox),
       sidebarIcon: box(sidebarSvg),
       title: box(title),
-      taskText: box(lineText || taskText),
+      titleText: title ? title.textContent : null,
+      titleFullyVisible: title
+        ? title.scrollWidth <= title.clientWidth + 1
+        : null,
+      taskText: box(lineText),
       categoriesBtn: box(document.querySelector('[data-aio-categories]')),
       sortBtn: box(document.querySelector('[data-aio-sort]')),
+      fabVisible: !!document.querySelector('[data-agentation-toolbar]')
+        && getComputedStyle(document.querySelector('[data-agentation-toolbar]')).display !== 'none',
     }
   })
 }
@@ -76,22 +79,78 @@ async function measureCategories(page) {
         cy: +(r.top + r.height / 2).toFixed(1),
       }
     }
+    // Text content left (not the padded element's border box)
+    const textLeft = (el) => {
+      if (!el) return null
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        return +el.getBoundingClientRect().left.toFixed(1)
+      }
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      const rects = range.getClientRects()
+      if (rects.length) return +rects[0].left.toFixed(1)
+      const pad = parseFloat(getComputedStyle(el).paddingLeft) || 0
+      return +(el.getBoundingClientRect().left + pad).toFixed(1)
+    }
     const row = document.querySelector('[data-aio-cat-row]')
     const dot = row?.querySelector('[data-aio-cat-dot]')
     const name = row?.querySelector('[data-aio-cat-name]')
+    const desc = row?.querySelector('[data-aio-cat-desc]')
     const more = row?.querySelector('[data-aio-cat-more]')
     const moreIcon = more?.querySelector('svg') || more
     const panel = document.querySelector('[role="dialog"][aria-label="Categories"]')
+    const catTitle = document.querySelector('[data-aio-cat-title]')
+    const purpose = document.querySelector('[data-aio-cat-purpose]')
+    const add = document.querySelector('[data-aio-cat-add]')
+    const nameFs = name ? parseFloat(getComputedStyle(name).fontSize) : null
+    const descFs = desc ? parseFloat(getComputedStyle(desc).fontSize) : null
+    const descTransform = desc ? getComputedStyle(desc).transform : null
+    const descVisualFs = (() => {
+      if (!desc) return null
+      const t = getComputedStyle(desc).transform
+      if (t && t !== 'none') {
+        const m = t.match(/matrix\(([^)]+)\)/)
+        if (m) {
+          const scale = parseFloat(m[1].split(',')[0])
+          return +(descFs * scale).toFixed(2)
+        }
+      }
+      return descFs
+    })()
+    const backChevron = panel?.querySelector('button[aria-label="Close categories"]')
+    const fab = document.querySelector('[data-agentation-toolbar]')
+    const fabHidden = !fab || getComputedStyle(fab).display === 'none' || getComputedStyle(fab).visibility === 'hidden'
+    const titleX = textLeft(catTitle)
+    const purposeX = textLeft(purpose)
+    const addX = textLeft(add)
+    const nameX = textLeft(name)
+    const descX = textLeft(desc)
     return {
       panel: box(panel),
+      panelRight: panel ? +panel.getBoundingClientRect().right.toFixed(1) : null,
+      categoriesBtnRight: (() => {
+        const b = document.querySelector('[data-aio-categories]')
+        return b ? +b.getBoundingClientRect().right.toFixed(1) : null
+      })(),
       row: box(row),
       dot: box(dot),
       name: box(name),
+      desc: box(desc),
       more: box(more),
       moreIcon: box(moreIcon),
+      title: { x: titleX },
+      purpose: { x: purposeX },
+      add: { x: addX },
+      textLefts: { title: titleX, purpose: purposeX, name: nameX, desc: descX, add: addX },
       nameMidY: name ? +(name.getBoundingClientRect().top + name.getBoundingClientRect().height / 2).toFixed(1) : null,
       dotCy: dot ? +(dot.getBoundingClientRect().top + dot.getBoundingClientRect().height / 2).toFixed(1) : null,
       moreCy: moreIcon ? +(moreIcon.getBoundingClientRect().top + moreIcon.getBoundingClientRect().height / 2).toFixed(1) : null,
+      nameFontSize: nameFs,
+      descVisual: { fontSize: descFs, visualFontSize: descVisualFs, transform: descTransform },
+      hasBackChevron: !!backChevron,
+      fabHidden,
+      moreColor: more ? getComputedStyle(more).color : null,
+      moreSize: more ? { w: +more.getBoundingClientRect().width.toFixed(1), h: +more.getBoundingClientRect().height.toFixed(1) } : null,
     }
   })
 }
@@ -113,7 +172,7 @@ async function drawRulers(page, lines, label) {
     }
     const tag = document.createElement('div')
     tag.textContent = label || ''
-    tag.style.cssText = 'position:absolute;top:4px;left:4px;padding:2px 6px;background:rgba(0,0,0,0.7);color:#fff;font:11px/1.2 monospace;'
+    tag.style.cssText = 'position:absolute;top:4px;left:4px;padding:2px 6px;background:rgba(0,0,0,0.7);color:#fff;font:11px/1.2 monospace;max-width:90vw;'
     root.appendChild(tag)
     document.body.appendChild(root)
   }, { lines, label })
@@ -165,7 +224,6 @@ async function main() {
 
       await shot(page, dirs, `${key}-1-main`)
 
-      // Ruler overlay for main alignment
       const lines = []
       if (mainM.checkbox) lines.push({ orient: 'v', at: mainM.checkbox.x, color: 'rgba(255,0,0,0.9)' })
       if (mainM.sidebarIcon) lines.push({ orient: 'v', at: mainM.sidebarIcon.x, color: 'rgba(0,180,80,0.9)' })
@@ -175,7 +233,6 @@ async function main() {
       await shot(page, dirs, `${key}-1-main-rulers`)
       await clearRulers(page)
 
-      // Open categories
       await page.click('[data-aio-categories]')
       await page.waitForSelector('[role="dialog"][aria-label="Categories"]', { timeout: 10000 })
       await page.waitForTimeout(250)
@@ -183,29 +240,27 @@ async function main() {
       report[key].categories = catM
       await shot(page, dirs, `${key}-2-categories`)
 
+      // One left text edge for title/purpose/name/add; dot centre vs name mid
+      const textEdge = catM.textLefts?.name
       const catLines = []
+      if (textEdge != null) catLines.push({ orient: 'v', at: textEdge, color: 'rgba(0,100,255,0.95)' })
+      if (catM.textLefts?.title != null) catLines.push({ orient: 'v', at: catM.textLefts.title, color: 'rgba(180,0,255,0.7)' })
+      if (catM.textLefts?.purpose != null) catLines.push({ orient: 'v', at: catM.textLefts.purpose, color: 'rgba(0,180,80,0.7)' })
+      if (catM.textLefts?.add != null) catLines.push({ orient: 'v', at: catM.textLefts.add, color: 'rgba(255,140,0,0.7)' })
       if (catM.dot) {
-        catLines.push({ orient: 'v', at: catM.dot.cx, color: 'rgba(255,140,0,0.95)' })
-        catLines.push({ orient: 'h', at: catM.dot.cy, color: 'rgba(255,140,0,0.7)' })
+        catLines.push({ orient: 'v', at: catM.dot.cx, color: 'rgba(255,0,0,0.7)' })
+        catLines.push({ orient: 'h', at: catM.dot.cy, color: 'rgba(255,0,0,0.5)' })
       }
-      if (catM.name) {
-        catLines.push({ orient: 'v', at: catM.name.x, color: 'rgba(0,100,255,0.9)' })
-        catLines.push({ orient: 'h', at: catM.nameMidY, color: 'rgba(0,100,255,0.7)' })
-      }
-      if (catM.more) {
-        catLines.push({ orient: 'h', at: catM.moreCy, color: 'rgba(0,180,80,0.7)' })
-      }
-      await drawRulers(page, catLines, `${key} cats: orange=dot centre, blue=name L/mid, green=more mid`)
+      if (catM.nameMidY != null) catLines.push({ orient: 'h', at: catM.nameMidY, color: 'rgba(0,100,255,0.5)' })
+      await drawRulers(page, catLines, `${key} cats: blue=name L, purple=title, green=guide, orange=add, red=dot`)
       await shot(page, dirs, `${key}-2-categories-rulers`)
       await clearRulers(page)
 
-      // Row menu
       await page.click('[data-aio-cat-more]')
       await page.waitForSelector('[role="menu"]', { timeout: 5000 })
       await page.waitForTimeout(150)
       await shot(page, dirs, `${key}-3-row-menu`)
 
-      // Delete confirm
       await page.getByRole('menuitem', { name: 'Delete' }).click()
       await page.waitForSelector('[role="dialog"][aria-label="Delete category"]', { timeout: 5000 })
       await page.waitForTimeout(150)
@@ -217,24 +272,27 @@ async function main() {
       report[key].confirm = { text: confirmText, deleteColor }
       await shot(page, dirs, `${key}-4-delete-confirm`)
 
-      // Align deltas
-      const iconDelta = mainM.checkbox && mainM.sidebarIcon
-        ? round1(mainM.sidebarIcon.x - mainM.checkbox.x)
-        : null
-      const titleDelta = mainM.taskText && mainM.title
-        ? round1(mainM.title.x - mainM.taskText.x)
-        : null
-      const dotNameDelta = catM.dotCy != null && catM.nameMidY != null
-        ? round1(catM.dotCy - catM.nameMidY)
-        : null
-      const moreNameDelta = catM.moreCy != null && catM.nameMidY != null
-        ? round1(catM.moreCy - catM.nameMidY)
-        : null
+      const textEdges = catM.textLefts || {}
+      const edgeTarget = textEdges.name
+      const edgeDeltas = {}
+      for (const [k, v] of Object.entries(textEdges)) {
+        edgeDeltas[k] = typeof v === 'number' && typeof edgeTarget === 'number'
+          ? round1(v - edgeTarget)
+          : null
+      }
+
       report[key].deltas = {
-        sidebarIconVsCheckboxLeft: iconDelta,
-        titleVsTaskTextLeft: titleDelta,
-        dotCentreVsNameMidY: dotNameDelta,
-        moreCentreVsNameMidY: moreNameDelta,
+        sidebarIconVsCheckboxLeft: mainM.checkbox && mainM.sidebarIcon
+          ? round1(mainM.sidebarIcon.x - mainM.checkbox.x) : null,
+        titleVsTaskTextLeft: mainM.taskText && mainM.title
+          ? round1(mainM.title.x - mainM.taskText.x) : null,
+        dotCentreVsNameMidY: catM.dotCy != null && catM.nameMidY != null
+          ? round1(catM.dotCy - catM.nameMidY) : null,
+        moreCentreVsNameMidY: catM.moreCy != null && catM.nameMidY != null
+          ? round1(catM.moreCy - catM.nameMidY) : null,
+        panelRightVsPillRight: catM.panelRight != null && catM.categoriesBtnRight != null
+          ? round1(catM.panelRight - catM.categoriesBtnRight) : null,
+        textEdgeDeltas: edgeDeltas,
       }
 
       await context.close()
@@ -245,21 +303,30 @@ async function main() {
 
   const table = []
   for (const [key, data] of Object.entries(report)) {
+    const e = data.deltas?.textEdgeDeltas || {}
     table.push({
       viewport: key,
       checkboxLeft: data.main?.checkbox?.x,
       sidebarIconLeft: data.main?.sidebarIcon?.x,
       taskTextLeft: data.main?.taskText?.x,
       titleLeft: data.main?.title?.x,
-      iconVsCheck: data.deltas?.sidebarIconVsCheckboxLeft,
-      titleVsTask: data.deltas?.titleVsTaskTextLeft,
-      catDotCy: data.categories?.dotCy,
-      catNameMidY: data.categories?.nameMidY,
-      catMoreCy: data.categories?.moreCy,
+      mainTitle: data.main?.titleText,
+      titleFull: data.main?.titleFullyVisible,
+      catTextEdge: data.categories?.textLefts?.name,
+      dTitle: e.title,
+      dPurpose: e.purpose,
+      dName: e.name,
+      dDesc: e.desc,
+      dAdd: e.add,
       dotVsName: data.deltas?.dotCentreVsNameMidY,
       moreVsName: data.deltas?.moreCentreVsNameMidY,
-      confirmText: data.confirm?.text,
-      deleteColor: data.confirm?.deleteColor,
+      panelVsPillR: data.deltas?.panelRightVsPillRight,
+      nameFs: data.categories?.nameFontSize,
+      descFs: data.categories?.descVisual?.visualFontSize ?? data.categories?.descVisual?.fontSize,
+      hasBack: data.categories?.hasBackChevron,
+      fabHidden: data.categories?.fabHidden,
+      moreColor: data.categories?.moreColor,
+      moreW: data.categories?.moreSize?.w,
     })
   }
 
@@ -269,34 +336,44 @@ async function main() {
   writeFileSync(join(PREVIEW, 'measurements.md'), markdownTable(table))
   console.log(markdownTable(table))
   console.log('\nArtifacts:', OUT)
-  console.log('Preview:', PREVIEW)
 
-  // Fail if any alignment delta exceeds 1px
   const failures = []
   for (const row of table) {
     for (const [k, v] of Object.entries({
-      iconVsCheck: row.iconVsCheck,
-      titleVsTask: row.titleVsTask,
+      iconVsCheck: report[row.viewport]?.deltas?.sidebarIconVsCheckboxLeft,
+      titleVsTask: report[row.viewport]?.deltas?.titleVsTaskTextLeft,
       dotVsName: row.dotVsName,
       moreVsName: row.moreVsName,
+      dTitle: row.dTitle,
+      dPurpose: row.dPurpose,
+      dDesc: row.dDesc,
+      dAdd: row.dAdd,
+      panelVsPillR: row.viewport.startsWith('1440') ? row.panelVsPillR : 0,
     })) {
       if (typeof v === 'number' && Math.abs(v) > 1) {
         failures.push(`${row.viewport} ${k}=${v}`)
       }
     }
+    if (row.hasBack) failures.push(`${row.viewport} hasBackChevron`)
+    if (row.viewport.startsWith('390') && row.fabHidden === false) {
+      failures.push(`${row.viewport} fabStillVisible`)
+    }
+    if (row.viewport.startsWith('390') && row.titleFull === false) {
+      failures.push(`${row.viewport} titleTruncated`)
+    }
   }
   if (failures.length) {
-    console.error('ALIGNMENT FAILURES (>1px):', failures.join('; '))
+    console.error('FAILURES:', failures.join('; '))
     process.exitCode = 2
   } else {
-    console.log('All alignments within 1px.')
+    console.log('All checks within 1px / pass.')
   }
 }
 
 function markdownTable(rows) {
   const cols = [
-    'viewport', 'checkboxLeft', 'sidebarIconLeft', 'taskTextLeft', 'titleLeft',
-    'iconVsCheck', 'titleVsTask', 'catDotCy', 'catNameMidY', 'dotVsName', 'moreVsName',
+    'viewport', 'catTextEdge', 'dTitle', 'dPurpose', 'dName', 'dDesc', 'dAdd',
+    'dotVsName', 'moreVsName', 'panelVsPillR', 'mainTitle', 'nameFs', 'descFs', 'fabHidden', 'moreW',
   ]
   const head = `| ${cols.join(' | ')} |`
   const sep = `| ${cols.map(() => '---').join(' | ')} |`

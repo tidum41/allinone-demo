@@ -1,3 +1,7 @@
+/* Shared content inset: text column starts at 42px (16 pad + 16 gutter + 10 gap).
+   Title, guide, names, descriptions, and + Add category share that left edge.
+   Dots hang in the 16px gutter to the left of the text edge. */
+
 .backdrop {
   position: fixed;
   inset: 0;
@@ -12,6 +16,10 @@
 }
 
 .panel {
+  --cat-pad: 16px;
+  --cat-gutter: 16px;
+  --cat-gap: 10px;
+  --cat-text-inset: 42px;
   position: fixed;
   z-index: 190;
   display: flex;
@@ -19,7 +27,9 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 12px 40px rgba(0, 0, 0, 0.14);
   max-height: 70vh;
   width: min(400px, calc(100vw - 24px));
   overflow: hidden;
@@ -32,6 +42,10 @@
 }
 
 .sheet {
+  --cat-pad: 16px;
+  --cat-gutter: 16px;
+  --cat-gap: 10px;
+  --cat-text-inset: 42px;
   position: fixed;
   left: 0;
   right: 0;
@@ -69,26 +83,9 @@
 .header {
   display: flex;
   align-items: center;
-  gap: 4px;
-  min-height: 48px;
-  padding: 4px 8px 0 4px;
-  flex-shrink: 0;
-}
-
-.closeBtn {
-  width: 44px;
   min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary);
+  padding: 12px var(--cat-pad) 4px var(--cat-text-inset);
   flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.closeBtn:hover,
-.closeBtn:focus-visible {
-  color: var(--color-text-primary);
 }
 
 .title {
@@ -103,7 +100,7 @@
 
 .purpose {
   margin: 0;
-  padding: 0 16px 12px;
+  padding: 0 var(--cat-pad) 12px var(--cat-text-inset);
   font-size: var(--font-size-sm);
   line-height: 1.45;
   color: var(--color-text-secondary);
@@ -144,11 +141,11 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 16px 1fr 44px;
-  column-gap: 10px;
+  grid-template-columns: var(--cat-gutter) 1fr 28px;
+  column-gap: var(--cat-gap);
   align-items: start;
   min-height: 44px;
-  padding: 12px 12px 12px 16px;
+  padding: 12px var(--cat-pad) 12px var(--cat-pad);
   background: var(--color-surface);
   transition: background var(--transition-fast);
   will-change: transform;
@@ -159,7 +156,7 @@
 }
 
 .swatch {
-  width: 16px;
+  width: var(--cat-gutter);
   height: 22px;
   display: flex;
   align-items: center;
@@ -222,7 +219,7 @@
 }
 
 .actions {
-  width: 44px;
+  width: 28px;
   height: 22px;
   position: relative;
   align-self: start;
@@ -233,24 +230,22 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-placeholder);
-  -webkit-tap-highlight-color: transparent;
-  transition: color var(--transition-fast);
-}
-
-.row:hover .moreBtn,
-.moreBtn:focus-visible {
   color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--transition-fast), background var(--transition-fast);
 }
 
 .moreBtn:hover,
+.moreBtn:focus-visible,
 .moreBtn[aria-expanded="true"] {
   color: var(--color-text-primary);
+  background: var(--color-border);
 }
 
 .menuPortal {
@@ -284,7 +279,7 @@
 }
 
 .menuItemDanger {
-  color: var(--color-text-placeholder);
+  color: var(--color-text-secondary);
 }
 
 .menuItemDanger:hover,
@@ -299,11 +294,10 @@
 
 .menuIcon {
   display: flex;
-  color: var(--color-text-placeholder);
+  color: var(--color-text-secondary);
 }
 
 .palette {
-  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -329,7 +323,7 @@
   gap: 8px;
   width: 100%;
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 var(--cat-pad) 0 var(--cat-text-inset);
   box-sizing: border-box;
   font-size: var(--font-size-md);
   color: var(--color-text-secondary);
@@ -441,8 +435,41 @@
     display: flex;
   }
 
+  .row {
+    grid-template-columns: var(--cat-gutter) 1fr 44px;
+  }
+
+  .actions {
+    width: 44px;
+  }
+
+  .moreBtn {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Names stay 16/500 (no iOS zoom). Descriptions look 14px muted;
+     on focus restore 16px so zoom stays prevented while typing. */
+  .nameInput {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 22px;
+  }
+
   .descInput {
     font-size: 16px;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
+    transform: scale(0.875);
+    transform-origin: left top;
+    width: calc(100% / 0.875);
+    margin-bottom: -0.2em;
+  }
+
+  .descInput:focus {
+    transform: none;
+    width: 100%;
+    margin-bottom: 0;
   }
 }
 

@@ -45,11 +45,19 @@ textarea, input {
   font-size: inherit;
 }
 
-/* Prevent iOS auto-zoom on focus */
+/* Prevent iOS auto-zoom on focus (category desc uses a scale trick instead) */
 @media (pointer: coarse) {
-  textarea, input {
+  textarea:not([data-aio-cat-desc]),
+  input:not([data-aio-cat-name]):not([data-aio-cat-desc]) {
     font-size: 16px;
   }
+}
+
+/* Hide Agentation FAB while categories sheet/panel is open */
+html[data-categories-open] [data-agentation-toolbar] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 a {

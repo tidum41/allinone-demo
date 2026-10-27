@@ -263,18 +263,43 @@
 @media (max-width: 680px) {
   .menuBar {
     padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+    gap: 6px;
+  }
+
+  /* Drop Aa/undo/bullet/checklist so the full title fits at 390 */
+  .iconCluster {
+    display: none;
   }
 
   .title {
     font-size: var(--font-size-sm);
+    overflow: visible;
+    text-overflow: clip;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .actions {
+    flex: 0 0 auto;
   }
 
   .categoriesBtn {
     padding: 0 10px;
+    margin-left: 4px;
+  }
+
+  .categoriesLabel {
+    /* keep readable; pill stays compact */
   }
 
   .sortBtn {
-    min-width: 56px;
+    min-width: 52px;
     padding: 0 12px;
+    margin-left: 4px;
   }
 }

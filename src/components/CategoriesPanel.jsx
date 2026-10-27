@@ -7,7 +7,7 @@ import {
   sentenceCaseName,
   UNSORTED_NAME,
 } from '../lib/categories'
-import { ChevronLeftIcon, MoreIcon, TrashIcon } from './icons'
+import { MoreIcon, TrashIcon } from './icons'
 import styles from './CategoriesPanel.module.css'
 
 const MOBILE_MQ = '(max-width: 680px)'
@@ -85,15 +85,13 @@ export function CategoriesPanel({
 
   const placePanel = useCallback(() => {
     if (isMobile || !anchorRef?.current) return
-    const sortEl = document.querySelector('[data-aio-sort]')
     const pill = anchorRef.current.getBoundingClientRect()
-    const sort = sortEl?.getBoundingClientRect()
     const width = Math.min(400, window.innerWidth - 24)
-    const rightEdge = sort ? sort.right : pill.right
-    let left = rightEdge - width
+    // Anchor right edge to the Categories pill's right edge
+    let left = pill.right - width
     left = Math.max(12, Math.min(left, window.innerWidth - width - 12))
     const top = pill.bottom + 8
-    setPanelPos({ top, left, width })
+    setPanelPos({ top, left, width, right: pill.right })
   }, [anchorRef, isMobile])
 
   useLayoutEffect(() => {
@@ -114,17 +112,24 @@ export function CategoriesPanel({
       setDetent('medium')
       setSheetHeight(null)
       setDragOffset(0)
+      document.documentElement.removeAttribute('data-categories-open')
       return
     }
+    document.documentElement.setAttribute('data-categories-open', '')
     const onKey = (e) => {
       if (e.key === 'Escape') {
         if (confirm) setConfirm(null)
-        else if (menuId) setMenuId(null)
-        else onClose()
+        else if (menuId) {
+          setMenuId(null)
+          setMenuPos(null)
+        } else onClose()
       }
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.documentElement.removeAttribute('data-categories-open')
+    }
   }, [open, confirm, menuId, onClose])
 
   useEffect(() => {
@@ -293,17 +298,9 @@ export function CategoriesPanel({
   const body = (
     <>
       <header className={styles.header}>
-        <button
-          type="button"
-          className={styles.closeBtn}
-          onClick={onClose}
-          aria-label="Close categories"
-        >
-          <ChevronLeftIcon />
-        </button>
-        <h1 className={styles.title}>Categories</h1>
+        <h1 className={styles.title} data-aio-cat-title>Categories</h1>
       </header>
-      <p className={styles.purpose}>
+      <p className={styles.purpose} data-aio-cat-purpose>
         Describe what goes in each category. Sort reads these lines to place your tasks.
       </p>
       <div className={styles.list} role="list">
@@ -416,7 +413,7 @@ export function CategoriesPanel({
             </div>
           )
         })}
-        <button type="button" className={styles.addRow} onClick={addCategory}>
+        <button type="button" className={styles.addRow} data-aio-cat-add onClick={addCategory}>
           + Add category
         </button>
       </div>
