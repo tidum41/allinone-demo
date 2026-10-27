@@ -1,6 +1,6 @@
-/* Shared content inset: text column starts at 42px (16 pad + 16 gutter + 10 gap).
-   Title, guide, names, descriptions, and + Add category share that left edge.
-   Dots hang in the 16px gutter to the left of the text edge. */
+/* One outer content edge (= panel pad). Title, guide, dots, and '+' start there.
+   Names / descriptions / "Add category" share the inner edge after gutter+gap.
+   Close × and ••• share one right edge (pad-right + action column). */
 
 .backdrop {
   position: fixed;
@@ -38,10 +38,10 @@
 
 /* Shared desktop rail surface */
 .rail {
-  --cat-pad: 16px;
+  --cat-pad: 24px;
   --cat-gutter: 16px;
   --cat-gap: 10px;
-  --cat-text-inset: 42px;
+  --cat-action: 28px;
   box-sizing: border-box;
   width: 360px;
   height: 100%;
@@ -78,7 +78,7 @@
   --cat-pad: 16px;
   --cat-gutter: 16px;
   --cat-gap: 10px;
-  --cat-text-inset: 42px;
+  --cat-action: 44px;
   position: fixed;
   left: 0;
   right: 0;
@@ -118,7 +118,7 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  padding: 12px var(--cat-pad) 4px var(--cat-text-inset);
+  padding: 12px var(--cat-pad) 4px var(--cat-pad);
   flex-shrink: 0;
 }
 
@@ -134,9 +134,8 @@
 }
 
 .closeBtn {
-  width: 28px;
-  height: 28px;
-  margin-right: -4px;
+  width: var(--cat-action);
+  height: var(--cat-action);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,7 +154,7 @@
 
 .purpose {
   margin: 0;
-  padding: 0 var(--cat-pad) 12px var(--cat-text-inset);
+  padding: 0 var(--cat-pad) 12px var(--cat-pad);
   font-size: var(--font-size-sm);
   line-height: 1.45;
   color: var(--color-text-secondary);
@@ -196,7 +195,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: var(--cat-gutter) 1fr 28px;
+  grid-template-columns: var(--cat-gutter) 1fr var(--cat-action);
   column-gap: var(--cat-gap);
   align-items: start;
   min-height: 44px;
@@ -215,7 +214,7 @@
   height: 22px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 0;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
@@ -274,7 +273,7 @@
 }
 
 .actions {
-  width: 28px;
+  width: var(--cat-action);
   height: 22px;
   position: relative;
   align-self: start;
@@ -285,8 +284,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 28px;
-  height: 28px;
+  width: var(--cat-action);
+  height: var(--cat-action);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -373,17 +372,32 @@
 }
 
 .addRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--cat-gutter) 1fr var(--cat-action);
+  column-gap: var(--cat-gap);
   align-items: center;
-  gap: 8px;
   width: 100%;
   min-height: 44px;
-  padding: 0 var(--cat-pad) 0 var(--cat-text-inset);
+  padding: 0 var(--cat-pad);
   box-sizing: border-box;
   font-size: var(--font-size-md);
   color: var(--color-text-secondary);
   text-align: left;
   -webkit-tap-highlight-color: transparent;
+}
+
+.addPlus {
+  width: var(--cat-gutter);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  line-height: 1;
+  font-weight: var(--font-weight-medium);
+}
+
+.addLabel {
+  min-width: 0;
+  text-align: left;
 }
 
 .addRow:hover,
@@ -490,19 +504,6 @@
 
   .grabberWrap {
     display: flex;
-  }
-
-  .row {
-    grid-template-columns: var(--cat-gutter) 1fr 44px;
-  }
-
-  .actions {
-    width: 44px;
-  }
-
-  .moreBtn {
-    width: 44px;
-    height: 44px;
   }
 
   /* Names stay 16/500 (no iOS zoom). Descriptions look 14px muted;

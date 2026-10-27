@@ -409,7 +409,8 @@ export function CategoriesPanel({
           )
         })}
         <button type="button" className={styles.addRow} data-aio-cat-add onClick={addCategory}>
-          + Add category
+          <span className={styles.addPlus} data-aio-cat-add-plus aria-hidden="true">+</span>
+          <span className={styles.addLabel} data-aio-cat-add-label>Add category</span>
         </button>
       </div>
 

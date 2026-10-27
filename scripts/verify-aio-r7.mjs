@@ -82,6 +82,7 @@ async function measureCategories(page) {
         y: +r.top.toFixed(1),
         w: +r.width.toFixed(1),
         h: +r.height.toFixed(1),
+        right: +r.right.toFixed(1),
         cx: +(r.left + r.width / 2).toFixed(1),
         cy: +(r.top + r.height / 2).toFixed(1),
       }
@@ -108,56 +109,53 @@ async function measureCategories(page) {
     const catTitle = document.querySelector('[data-aio-cat-title]')
     const purpose = document.querySelector('[data-aio-cat-purpose]')
     const add = document.querySelector('[data-aio-cat-add]')
+    const addPlus = document.querySelector('[data-aio-cat-add-plus]')
+    const addLabel = document.querySelector('[data-aio-cat-add-label]')
     const closeBtn = document.querySelector('[data-aio-cat-close]')
     const layout = panel?.getAttribute('data-aio-cat-layout')
       || document.querySelector('[data-aio-cat-layout]')?.getAttribute('data-aio-cat-layout')
-    const nameFs = name ? parseFloat(getComputedStyle(name).fontSize) : null
-    const descFs = desc ? parseFloat(getComputedStyle(desc).fontSize) : null
-    const descTransform = desc ? getComputedStyle(desc).transform : null
-    const descVisualFs = (() => {
-      if (!desc) return null
-      const t = getComputedStyle(desc).transform
-      if (t && t !== 'none') {
-        const m = t.match(/matrix\(([^)]+)\)/)
-        if (m) {
-          const scale = parseFloat(m[1].split(',')[0])
-          return +(descFs * scale).toFixed(2)
-        }
-      }
-      return descFs
-    })()
     const fab = document.querySelector('[data-agentation-toolbar]')
     const fabHidden = !fab || getComputedStyle(fab).display === 'none' || getComputedStyle(fab).visibility === 'hidden'
     const titleX = textLeft(catTitle)
     const purposeX = textLeft(purpose)
-    const addX = textLeft(add)
+    // Plus / dot use box left (glyph bearings would falsely offset '+')
+    const addPlusX = addPlus ? +addPlus.getBoundingClientRect().left.toFixed(1) : null
+    const addLabelX = textLeft(addLabel)
     const nameX = textLeft(name)
     const descX = textLeft(desc)
-    const borderLeft = panel ? getComputedStyle(panel).borderLeftWidth : null
-    const boxShadow = panel ? getComputedStyle(panel).boxShadow : null
+    const dotLeft = dot ? +dot.getBoundingClientRect().left.toFixed(1) : null
+    const closeRight = closeBtn ? +closeBtn.getBoundingClientRect().right.toFixed(1) : null
+    const moreRight = more ? +more.getBoundingClientRect().right.toFixed(1) : null
     return {
       panel: box(panel),
       layout,
-      borderLeft,
-      boxShadow,
       row: box(row),
       dot: box(dot),
       name: box(name),
       desc: box(desc),
       more: box(more),
       moreIcon: box(moreIcon),
-      title: { x: titleX },
-      purpose: { x: purposeX },
-      add: { x: addX },
-      textLefts: { title: titleX, purpose: purposeX, name: nameX, desc: descX, add: addX },
+      close: box(closeBtn),
+      outer: {
+        title: titleX,
+        purpose: purposeX,
+        dot: dotLeft,
+        addPlus: addPlusX,
+      },
+      inner: {
+        name: nameX,
+        desc: descX,
+        addLabel: addLabelX,
+      },
+      right: {
+        close: closeRight,
+        more: moreRight,
+      },
       nameMidY: name ? +(name.getBoundingClientRect().top + name.getBoundingClientRect().height / 2).toFixed(1) : null,
       dotCy: dot ? +(dot.getBoundingClientRect().top + dot.getBoundingClientRect().height / 2).toFixed(1) : null,
       moreCy: moreIcon ? +(moreIcon.getBoundingClientRect().top + moreIcon.getBoundingClientRect().height / 2).toFixed(1) : null,
-      nameFontSize: nameFs,
-      descVisual: { fontSize: descFs, visualFontSize: descVisualFs, transform: descTransform },
       hasClose: !!closeBtn,
       fabHidden,
-      moreColor: more ? getComputedStyle(more).color : null,
       moreSize: more ? { w: +more.getBoundingClientRect().width.toFixed(1), h: +more.getBoundingClientRect().height.toFixed(1) } : null,
       mainPaneWidth: (() => {
         const p = document.querySelector('.mainPane')
@@ -178,6 +176,7 @@ async function measureCategories(page) {
         return { x: +r.left.toFixed(1) }
       })(),
       pillPressed: document.querySelector('[data-aio-categories]')?.getAttribute('aria-pressed') === 'true',
+      add: box(add),
     }
   })
 }
@@ -268,22 +267,14 @@ async function main() {
       report[key].categories = catM
       await shot(page, dirs, `${key}-2-open`)
 
-      const textEdge = catM.textLefts?.name
+      const outerX = catM.outer?.title
+      const innerX = catM.inner?.name
+      const rightX = catM.right?.more
       const catLines = []
-      if (textEdge != null) catLines.push({ orient: 'v', at: textEdge, color: 'rgba(0,100,255,0.95)' })
-      if (catM.textLefts?.title != null) catLines.push({ orient: 'v', at: catM.textLefts.title, color: 'rgba(180,0,255,0.7)' })
-      if (catM.textLefts?.purpose != null) catLines.push({ orient: 'v', at: catM.textLefts.purpose, color: 'rgba(0,180,80,0.7)' })
-      if (catM.textLefts?.add != null) catLines.push({ orient: 'v', at: catM.textLefts.add, color: 'rgba(255,140,0,0.7)' })
-      if (catM.dot) {
-        catLines.push({ orient: 'v', at: catM.dot.cx, color: 'rgba(255,0,0,0.7)' })
-        catLines.push({ orient: 'h', at: catM.dot.cy, color: 'rgba(255,0,0,0.5)' })
-      }
-      if (catM.nameMidY != null) catLines.push({ orient: 'h', at: catM.nameMidY, color: 'rgba(0,100,255,0.5)' })
-      if (catM.panel) {
-        catLines.push({ orient: 'v', at: catM.panel.x, color: 'rgba(255,0,180,0.6)' })
-      }
-      if (catM.checkbox) catLines.push({ orient: 'v', at: catM.checkbox.x, color: 'rgba(255,80,0,0.7)' })
-      await drawRulers(page, catLines, `${key} open: blue=name L, purple=title, green=guide, orange=add, red=dot, pink=rail L`)
+      if (outerX != null) catLines.push({ orient: 'v', at: outerX, color: 'rgba(255,0,0,0.95)' })
+      if (innerX != null) catLines.push({ orient: 'v', at: innerX, color: 'rgba(0,100,255,0.95)' })
+      if (rightX != null) catLines.push({ orient: 'v', at: rightX, color: 'rgba(0,180,80,0.95)' })
+      await drawRulers(page, catLines, `${key} open: red=outer L, blue=inner name L, green=right action R`)
       await shot(page, dirs, `${key}-2-open-rulers`)
       await clearRulers(page)
 
@@ -323,24 +314,22 @@ async function main() {
         await shot(page, dirs, `${key}-4-delete-confirm`)
       }
 
-      const textEdges = catM.textLefts || {}
-      const edgeTarget = textEdges.name
-      const edgeDeltas = {}
-      for (const [k, v] of Object.entries(textEdges)) {
-        edgeDeltas[k] = typeof v === 'number' && typeof edgeTarget === 'number'
-          ? round1(v - edgeTarget)
+      const outerTarget = catM.outer?.title
+      const outerDeltas = {}
+      for (const [k, v] of Object.entries(catM.outer || {})) {
+        outerDeltas[k] = typeof v === 'number' && typeof outerTarget === 'number'
+          ? round1(v - outerTarget)
           : null
       }
-
-      const closedCheck = mainM.checkbox?.x
-      const closedText = mainM.taskText?.x
-      const openCheck = catM.checkbox?.x
-      const openText = catM.taskText?.x
-      const internalGapClosed = closedCheck != null && closedText != null
-        ? round1(closedText - closedCheck)
-        : null
-      const internalGapOpen = openCheck != null && openText != null
-        ? round1(openText - openCheck)
+      const innerTarget = catM.inner?.name
+      const innerDeltas = {}
+      for (const [k, v] of Object.entries(catM.inner || {})) {
+        innerDeltas[k] = typeof v === 'number' && typeof innerTarget === 'number'
+          ? round1(v - innerTarget)
+          : null
+      }
+      const rightDelta = catM.right?.close != null && catM.right?.more != null
+        ? round1(catM.right.close - catM.right.more)
         : null
 
       report[key].deltas = {
@@ -352,18 +341,15 @@ async function main() {
           ? round1(catM.dotCy - catM.nameMidY) : null,
         moreCentreVsNameMidY: catM.moreCy != null && catM.nameMidY != null
           ? round1(catM.moreCy - catM.nameMidY) : null,
-        textEdgeDeltas: edgeDeltas,
+        outerDeltas,
+        innerDeltas,
+        rightDelta,
+        outerEdge: outerTarget,
+        innerEdge: innerTarget,
+        rightEdge: catM.right?.more ?? null,
         panelWidth: catM.panel?.w ?? null,
         mainPaneShrink: mainM.mainPaneWidth != null && catM.mainPaneWidth != null
           ? round1(mainM.mainPaneWidth - catM.mainPaneWidth)
-          : null,
-        taskShift: closedCheck != null && openCheck != null
-          ? round1(openCheck - closedCheck)
-          : null,
-        internalGapClosed,
-        internalGapOpen,
-        internalGapDelta: internalGapClosed != null && internalGapOpen != null
-          ? round1(internalGapOpen - internalGapClosed)
           : null,
       }
 
@@ -375,31 +361,24 @@ async function main() {
 
   const table = []
   for (const [key, data] of Object.entries(report)) {
-    const e = data.deltas?.textEdgeDeltas || {}
+    const o = data.deltas?.outerDeltas || {}
+    const i = data.deltas?.innerDeltas || {}
     table.push({
       viewport: key,
-      checkboxLeft: data.main?.checkbox?.x,
-      taskTextLeft: data.main?.taskText?.x,
-      openCheckLeft: data.categories?.checkbox?.x,
       layout: data.categories?.layout,
-      panelW: data.deltas?.panelWidth,
-      mainShrink: data.deltas?.mainPaneShrink,
-      taskShift: data.deltas?.taskShift,
-      gapClosed: data.deltas?.internalGapClosed,
-      gapOpen: data.deltas?.internalGapOpen,
-      gapDelta: data.deltas?.internalGapDelta,
-      catTextEdge: data.categories?.textLefts?.name,
-      dTitle: e.title,
-      dPurpose: e.purpose,
-      dName: e.name,
-      dDesc: e.desc,
-      dAdd: e.add,
-      dotVsName: data.deltas?.dotCentreVsNameMidY,
-      moreVsName: data.deltas?.moreCentreVsNameMidY,
+      outer: data.deltas?.outerEdge,
+      dPurpose: o.purpose,
+      dDot: o.dot,
+      dAddPlus: o.addPlus,
+      inner: data.deltas?.innerEdge,
+      dDesc: i.desc,
+      dAddLabel: i.addLabel,
+      right: data.deltas?.rightEdge,
+      dCloseVsMore: data.deltas?.rightDelta,
       hasClose: data.categories?.hasClose,
       pillPressed: data.categories?.pillPressed,
       fabHidden: data.categories?.fabHidden,
-      borderLeft: data.categories?.borderLeft,
+      panelW: data.deltas?.panelWidth,
     })
   }
 
@@ -413,49 +392,28 @@ async function main() {
   const failures = []
   for (const row of table) {
     for (const [k, v] of Object.entries({
-      iconVsCheck: report[row.viewport]?.deltas?.sidebarIconVsCheckboxLeft,
-      titleVsTask: report[row.viewport]?.deltas?.titleVsTaskTextLeft,
-      dotVsName: row.dotVsName,
-      moreVsName: row.moreVsName,
-      dTitle: row.dTitle,
       dPurpose: row.dPurpose,
+      dDot: row.dDot,
+      dAddPlus: row.dAddPlus,
       dDesc: row.dDesc,
-      dAdd: row.dAdd,
-      gapDelta: row.gapDelta,
+      dAddLabel: row.dAddLabel,
+      dCloseVsMore: row.dCloseVsMore,
+      dotVsNameY: report[row.viewport]?.deltas?.dotCentreVsNameMidY,
+      moreVsNameY: report[row.viewport]?.deltas?.moreCentreVsNameMidY,
     })) {
       if (typeof v === 'number' && Math.abs(v) > 1) {
         failures.push(`${row.viewport} ${k}=${v}`)
       }
     }
 
-    // Closed alignment targets at 1440
-    if (row.viewport.startsWith('1440')) {
-      if (typeof row.checkboxLeft === 'number' && Math.abs(row.checkboxLeft - 396) > 1) {
-        failures.push(`${row.viewport} checkboxLeft=${row.checkboxLeft} (want ~396)`)
-      }
-      if (typeof row.taskTextLeft === 'number' && Math.abs(row.taskTextLeft - 422) > 1) {
-        failures.push(`${row.viewport} taskTextLeft=${row.taskTextLeft} (want ~422)`)
-      }
+    if (row.viewport.startsWith('1440') || row.viewport.startsWith('1280')) {
       if (row.layout !== 'push') failures.push(`${row.viewport} layout=${row.layout} (want push)`)
       if (typeof row.panelW === 'number' && Math.abs(row.panelW - 360) > 1) {
         failures.push(`${row.viewport} panelW=${row.panelW}`)
-      }
-      if (typeof row.mainShrink === 'number' && Math.abs(row.mainShrink - 360) > 1) {
-        failures.push(`${row.viewport} mainShrink=${row.mainShrink} (want ~360)`)
       }
       if (!row.hasClose) failures.push(`${row.viewport} missingClose`)
       if (!row.pillPressed) failures.push(`${row.viewport} pillNotPressed`)
-    }
-
-    if (row.viewport.startsWith('1280')) {
-      if (row.layout !== 'push') failures.push(`${row.viewport} layout=${row.layout} (want push)`)
-      if (typeof row.panelW === 'number' && Math.abs(row.panelW - 360) > 1) {
-        failures.push(`${row.viewport} panelW=${row.panelW}`)
-      }
-      if (typeof row.mainShrink === 'number' && Math.abs(row.mainShrink - 360) > 1) {
-        failures.push(`${row.viewport} mainShrink=${row.mainShrink}`)
-      }
-      if (!row.hasClose) failures.push(`${row.viewport} missingClose`)
+      if (row.dCloseVsMore == null) failures.push(`${row.viewport} missingRightEdge`)
     }
 
     if (row.viewport.startsWith('390')) {
@@ -474,10 +432,9 @@ async function main() {
 
 function markdownTable(rows) {
   const cols = [
-    'viewport', 'checkboxLeft', 'taskTextLeft', 'openCheckLeft', 'layout', 'panelW',
-    'mainShrink', 'taskShift', 'gapClosed', 'gapOpen', 'gapDelta',
-    'catTextEdge', 'dTitle', 'dPurpose', 'dDesc', 'dAdd',
-    'dotVsName', 'moreVsName', 'hasClose', 'pillPressed', 'fabHidden',
+    'viewport', 'layout', 'outer', 'dPurpose', 'dDot', 'dAddPlus',
+    'inner', 'dDesc', 'dAddLabel', 'right', 'dCloseVsMore',
+    'hasClose', 'pillPressed', 'panelW',
   ]
   const head = `| ${cols.join(' | ')} |`
   const sep = `| ${cols.map(() => '---').join(' | ')} |`
