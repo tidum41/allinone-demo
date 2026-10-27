@@ -21,4 +21,21 @@
   text-underline-offset: 2px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: color var(--transition-fast), opacity var(--transition-fast);
+  border-radius: 2px;
+}
+
+@media (hover: hover) {
+  .link:hover {
+    color: var(--color-text-secondary);
+  }
+}
+
+.link:active {
+  opacity: 0.7;
+}
+
+.link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }

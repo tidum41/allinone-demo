@@ -90,13 +90,26 @@
   flex-shrink: 0;
   margin-top: 5px;
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
   position: relative;
 }
 
-.square:hover,
+@media (hover: hover) {
+  .square:hover {
+    border-color: var(--color-text-secondary);
+  }
+}
+
 .square:active {
-  background: transparent;
+  transform: scale(var(--press-scale));
+}
+
+.square:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .squareChecked {
@@ -104,9 +117,15 @@
   border-color: var(--color-text-secondary);
 }
 
-.squareChecked:hover,
+@media (hover: hover) {
+  .squareChecked:hover {
+    background: var(--color-text-secondary);
+    border-color: var(--color-text-secondary);
+  }
+}
+
 .squareChecked:active {
-  background: var(--color-text-secondary);
+  transform: scale(var(--press-scale));
 }
 
 .squareChecked::after {

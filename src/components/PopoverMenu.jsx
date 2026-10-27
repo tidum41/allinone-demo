@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './PopoverMenu.module.css'
 
 /**
- * Shared anchored menu — same styling/motion as the Categories ••• menu.
- * Keyboard: ArrowUp/Down, Home/End, Enter/Space, Escape.
+ * Shared anchored menu — Categories ••• and urgency.
+ * Enter: opacity + scale(0.95→1), transform-origin from trigger.
+ * Keyboard: ArrowUp/Down, Home/End, Enter/Space, Escape (no motion on focus move).
  */
 export function PopoverMenu({
   open,
@@ -20,23 +21,32 @@ export function PopoverMenu({
 }) {
   const localRef = useRef(null)
   const menuRef = menuRefProp || localRef
-  const posRef = useRef({ top: 0, left: 0 })
+  const [pos, setPos] = useState({ top: 0, left: 0, origin: 'top right', ready: false })
+  const [entered, setEntered] = useState(false)
 
   useLayoutEffect(() => {
-    if (!open || !anchorRef?.current) return
+    if (!open || !anchorRef?.current) {
+      setEntered(false)
+      setPos((p) => ({ ...p, ready: false }))
+      return
+    }
     const r = anchorRef.current.getBoundingClientRect()
-    const top = r.bottom + 4 + estimatedHeight > window.innerHeight
+    const opensUp = r.bottom + 4 + estimatedHeight > window.innerHeight
+    const top = opensUp
       ? Math.max(8, r.top - estimatedHeight - 4)
       : r.bottom + 4
     const left = align === 'end'
       ? Math.max(8, Math.min(r.right - minWidth, window.innerWidth - minWidth - 8))
       : Math.max(8, Math.min(r.left, window.innerWidth - minWidth - 8))
-    posRef.current = { top, left }
-    if (menuRef.current) {
-      menuRef.current.style.top = `${top}px`
-      menuRef.current.style.left = `${left}px`
-    }
-  }, [open, anchorRef, align, minWidth, estimatedHeight, menuRef])
+    const originX = align === 'end' ? 'right' : 'left'
+    const originY = opensUp ? 'bottom' : 'top'
+    setPos({ top, left, origin: `${originY} ${originX}`, ready: true })
+    setEntered(false)
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setEntered(true))
+    })
+    return () => cancelAnimationFrame(id)
+  }, [open, anchorRef, align, minWidth, estimatedHeight])
 
   useEffect(() => {
     if (!open) return
@@ -49,7 +59,6 @@ export function PopoverMenu({
       items[i].focus()
     }
 
-    // Focus checked item, else first
     requestAnimationFrame(() => {
       const items = [...(menuRef.current?.querySelectorAll(itemSelector) || [])]
       const checked = items.findIndex((el) => el.getAttribute('aria-checked') === 'true')
@@ -97,18 +106,21 @@ export function PopoverMenu({
     }
   }, [open, onClose, anchorRef, menuRef])
 
-  if (!open) return null
-
-  const { top, left } = posRef.current
+  if (!open || !pos.ready) return null
 
   return createPortal(
     <div
       ref={menuRef}
-      className={`${styles.menu}${className ? ` ${className}` : ''}`}
+      className={`${styles.menu}${entered ? ` ${styles.menuOpen}` : ''}${className ? ` ${className}` : ''}`}
       role="menu"
       data-aio-popover-menu
       data-menu={dataMenu}
-      style={{ top, left, minWidth }}
+      style={{
+        top: pos.top,
+        left: pos.left,
+        minWidth,
+        '--menu-origin': pos.origin,
+      }}
     >
       {children}
     </div>,

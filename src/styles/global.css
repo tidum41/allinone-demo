@@ -40,6 +40,16 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Shared focus-visible ring for pressable controls */
+:where(button, a, [role="menuitem"], [role="menuitemradio"]):focus {
+  outline: none;
+}
+
+:where(button, a, [role="menuitem"], [role="menuitemradio"]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
 textarea, input {
   font-family: inherit;
   font-size: inherit;
@@ -108,6 +118,7 @@ a {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -193,13 +204,13 @@ a {
 .toolbarMain {
   flex: 1;
   min-width: 0;
-  transition: flex-basis 200ms ease-out;
+  transition: flex-basis var(--dur-base) var(--ease-out);
 }
 
 .toolbarRailGutter {
   flex-shrink: 0;
   width: 0;
-  transition: width 200ms ease-out;
+  transition: width var(--dur-base) var(--ease-out);
 }
 
 /* Only push the gutter when the viewport can host the rail (≥1100). */

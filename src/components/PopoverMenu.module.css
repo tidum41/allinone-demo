@@ -1,10 +1,5 @@
-/* Shared popover menu — same chrome as Categories ••• menu.
-   radius 10, shadow, 4px pad, 36px items, sm type, fadeIn 120ms. */
-
-@keyframes menuIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* Shared popover menu — Categories ••• and urgency badge.
+   Enter: opacity + scale(0.95) (never 0), ease-out, origin from trigger. */
 
 .menu {
   position: fixed;
@@ -15,7 +10,18 @@
   border: 1px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  animation: menuIn 120ms ease;
+  transform-origin: var(--menu-origin, top right);
+  opacity: 0;
+  transform: scale(0.95);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+  will-change: opacity, transform;
+}
+
+.menuOpen {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .item {
@@ -31,19 +37,30 @@
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition-fast);
 }
 
-.item:hover,
+@media (hover: hover) {
+  .item:hover {
+    background: var(--color-border);
+  }
+}
+
 .item:focus-visible {
   background: var(--color-border);
-  outline: none;
 }
 
 .itemDanger {
   color: var(--color-text-secondary);
 }
 
-.itemDanger:hover,
+@media (hover: hover) {
+  .itemDanger:hover {
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  }
+}
+
 .itemDanger:focus-visible {
   color: var(--color-danger);
   background: color-mix(in srgb, var(--color-danger) 10%, transparent);
@@ -62,6 +79,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .menu {
-    animation: none;
+    transition: none;
+    transform: none;
+  }
+
+  .menuOpen {
+    opacity: 1;
   }
 }
