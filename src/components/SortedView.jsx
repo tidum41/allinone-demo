@@ -1,9 +1,8 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useMemo } from 'react'
 import { CategorySection } from './CategorySection'
 import { CompletedSection } from './CompletedSection'
+import { UNSORTED_NAME } from '../lib/categories'
 import styles from './SortedView.module.css'
-
-const CATEGORY_ORDER = ['School', 'Product Design', 'Involvement', 'Home', 'Personal', 'Thinking']
 
 function formatLastSorted(iso) {
   if (!iso) return null
@@ -19,12 +18,32 @@ function formatLastSorted(iso) {
   return `sorted ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
 }
 
-export function SortedView({ tasks, completingItems = {}, onComplete, onPriorityChange, onCategoryChange, onTextChange, onAddAfter, newTaskId, onDeleteSelected, completedTasks, onUncheck, completedSectionRef }) {
+export function SortedView({ tasks, categories = [], completingItems = {}, onComplete, onPriorityChange, onCategoryChange, onTextChange, onAddAfter, newTaskId, onDeleteSelected, completedTasks, onUncheck, completedSectionRef }) {
   const completingTaskIds = new Set(Object.keys(completingItems))
 
-  const grouped = CATEGORY_ORDER.reduce((acc, cat) => {
+  const categoryOrder = useMemo(() => {
+    const names = categories.map(c => c.name)
+    if (!names.includes(UNSORTED_NAME)) names.push(UNSORTED_NAME)
+    // Include any orphan category names still present on tasks
+    const seen = new Set(names.map(n => n.toLowerCase()))
+    for (const t of tasks) {
+      const n = t.category
+      if (n && !seen.has(n.toLowerCase())) {
+        names.push(n)
+        seen.add(n.toLowerCase())
+      }
+    }
+    return names
+  }, [categories, tasks])
+
+  const colorByName = useMemo(() => {
+    const map = {}
+    for (const c of categories) map[c.name] = c.color
+    return map
+  }, [categories])
+
+  const grouped = categoryOrder.reduce((acc, cat) => {
     const regular = tasks.filter(t => t.category === cat)
-    // Append any completing items that belong to this category (still in 1.8s window)
     const completing = Object.values(completingItems).filter(t => t.category === cat)
     acc[cat] = [...regular, ...completing]
     return acc
@@ -133,18 +152,19 @@ export function SortedView({ tasks, completingItems = {}, onComplete, onPriority
   // ─────────────────────────────────────────────────────────────────
 
   if (!tasks.length && !completedTasks?.length) {
-    return <p className={styles.empty}>add tasks above, then tap sort ↑</p>
+    return <p className={styles.empty}>Add tasks above, then tap Sort</p>
   }
 
   const lastSortedLabel = formatLastSorted(localStorage.getItem('lastSortedAt'))
 
   return (
     <div className={styles.wrap}>
-      {CATEGORY_ORDER.map(cat =>
+      {categoryOrder.map(cat =>
         grouped[cat].length > 0 ? (
           <CategorySection
             key={cat}
             category={cat}
+            color={colorByName[cat]}
             tasks={grouped[cat]}
             completingTaskIds={completingTaskIds}
             onComplete={onComplete}

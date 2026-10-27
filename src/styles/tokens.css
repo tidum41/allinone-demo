@@ -11,6 +11,9 @@
   --color-text-secondary: #888888;
   --color-text-placeholder: #BBBBBB;
 
+  /* Destructive (delete hover + confirm). Not Personal rose. */
+  --color-danger: #C23B3B;
+
   /* Category dots */
   --color-school: #D4C5A9;
   --color-product-design: #B8C9D9;
@@ -35,8 +38,8 @@
   --space-lg: 24px;
   --space-xl: 40px;
 
-  /* Typography */
-  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  /* Typography — Helvetica Neue / Arial per taste */
+  --font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-size-xs: 11px;
   --font-size-sm: 13px;
   --font-size-md: 15px;
@@ -63,7 +66,8 @@
   --color-selection: #3A3A3C;
   --color-text-primary: #F2F2F7;
   --color-text-secondary: #8E8E93;
-  --color-text-placeholder: #58585A;
+  --color-text-placeholder: #6E6E73;
+  --color-danger: #E25555;
 
   --color-school: #BFA880;
   --color-product-design: #7A9CB8;

@@ -24,6 +24,12 @@
   cursor: text;
 }
 
+@media (max-width: 680px) {
+  .line {
+    min-height: 44px;
+  }
+}
+
 .lineSelected {
   background: var(--color-selection);
 }

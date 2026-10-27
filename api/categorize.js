@@ -1,14 +1,30 @@
-const SYSTEM_PROMPT = `You are a task categorization assistant for a product designer. Your job is to read a freeform note blob, extract individual tasks, lightly clean their formatting, assign each one to exactly one category, and assign a priority level.
+const DEFAULT_CATEGORY_LINES = [
+  'School: classes, readings, quizzes, coursework',
+  'Product design: portfolio, wireframes, research, design work',
+  'Involvement: clubs, volunteering, community, events',
+  'Home: chores, groceries, errands, apartment stuff',
+  'Personal: health, friends, self-care, appointments',
+  'Thinking: loose ideas, half-formed plans, things to explore someday',
+]
 
-CATEGORIES:
-- School: Coursework, assignments, lectures, studying, academic deadlines, anything learning or education related.
-- Product Design: Design work, wireframes, prototyping, user research, design systems, portfolio, client work, rebrand projects, UI/UX tasks.
-- Involvement: Community, clubs, volunteering, neighborhood, coalitions, organizations, journalism, events.
-- Home: Chores, groceries, errands, apartment tasks, renter admin, domestic anything.
-- Personal: Health, relationships, social plans, self-care, appointments, friends and family.
-- Thinking: Loose thoughts, future ideas, half-formed plans, career reflections, things to explore someday — not actionable right now.
+function buildSystemPrompt(categories = []) {
+  const categoryLines = Array.isArray(categories) && categories.length > 0
+    ? categories.map((c) => {
+        const name = String(c?.name || '').trim()
+        const desc = String(c?.description || '').trim()
+        return desc ? `${name}: ${desc}` : name
+      }).filter(Boolean)
+    : DEFAULT_CATEGORY_LINES
 
-PRIORITY LEVELS (do not assign to Thinking):
+  const names = categoryLines.map((line) => line.split(':')[0].trim()).filter(Boolean)
+  const thinkingName = names.find((n) => n.toLowerCase() === 'thinking') || 'Thinking'
+
+  return `You are a task categorization assistant for a product designer. Your job is to read a freeform note blob, extract individual tasks, lightly clean their formatting, assign each one to exactly one category, and assign a priority level.
+
+CATEGORIES (use these exact names; read the descriptions to decide where each task goes):
+${categoryLines.map((l) => `- ${l}`).join('\n')}
+
+PRIORITY LEVELS (do not assign to ${thinkingName}):
 - Urgent: Needs to happen very soon, time-sensitive, deadlines implied
 - Soon: Should happen in the near future but not immediately critical
 - Eventually: No urgency, would be nice to do, no deadline implied
@@ -17,15 +33,17 @@ FORMATTING RULES:
 - Preserve the user's exact wording and casing. Do NOT change capitalization.
 - Strip bullet characters. Each task is its own object.
 - Do not merge tasks. Do not invent tasks not in the blob.
-- Thinking items get priority: null
+- ${thinkingName} items get priority: null
+- If nothing fits, use Unsorted
 
 OUTPUT: Respond only with a JSON object of the form {"tasks":[...]}. No explanation, no markdown fences. Example:
 {
   "tasks": [
-    { "id": "a1b2c3d4", "text": "finish wireframes for hero onboarding", "category": "Product Design", "priority": "Soon" },
+    { "id": "a1b2c3d4", "text": "finish wireframes for hero onboarding", "category": "Product design", "priority": "Soon" },
     { "id": "e5f6g7h8", "text": "think about switching to a smaller studio", "category": "Thinking", "priority": null }
   ]
 }`
+}
 
 // Groq shut down llama-3.1-8b-instant for free/developer tiers on 2026-08-16.
 // Official replacement: openai/gpt-oss-20b. Qwen is available as GROQ_MODEL=qwen/qwen3.8-27b.
@@ -120,7 +138,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Rate limit reached. Try again in an hour.' })
   }
 
-  const { text, categoryRules = [] } = req.body || {}
+  const { text, categoryRules = [], categories = [] } = req.body || {}
   if (!text?.trim()) {
     return res.status(400).json({ error: 'No text provided' })
   }
@@ -140,7 +158,7 @@ export default async function handler(req, res) {
     max_tokens: 4096,
     temperature: 0.2,
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT + learnedCorrections },
+      { role: 'system', content: buildSystemPrompt(categories) + learnedCorrections },
       { role: 'user', content: `Here is my note blob. Extract and categorize all tasks:\n\n${text}` },
     ],
     response_format: {

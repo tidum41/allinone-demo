@@ -9,6 +9,8 @@ import { SortedView } from './components/SortedView'
 import { SkeletonLoader } from './components/SkeletonLoader'
 import { SummaryPanel } from './components/SummaryPanel'
 import { NoteEditor } from './components/NoteEditor'
+import { CategoriesPanel } from './components/CategoriesPanel'
+import { CategoriesGuide } from './components/CategoriesGuide'
 
 const VIEW_MAIN = 'main'
 const VIEW_NOTE_EDITOR = 'noteEditor'
@@ -22,6 +24,7 @@ export default function App() {
   const {
     lines, updateLines, blobText, blobLoaded,
     categoryRules, saveRule,
+    categories, persistCategories,
     notes, saveNote, deleteNote,
     savedTasks, tasksLoaded, persistTasks,
     savedCompleted, persistCompleted, removeCompleted, pruneCompleted,
@@ -34,9 +37,11 @@ export default function App() {
   const blobRef = useRef(null)
   const sidebarRef = useRef(null)
   const completedSectionRef = useRef(null)
+  const categoriesBtnRef = useRef(null)
   const dragOffsetRef = useRef(null)
   const notesRef = useRef([])
   const completingTimersRef = useRef({})  // taskId → setTimeout ID, cancelled on undo
+  const deleteToastTimerRef = useRef(null)
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -51,6 +56,8 @@ export default function App() {
   const [sortDone, setSortDone] = useState(false)
   const [newTaskId, setNewTaskId] = useState(null)
   const [activeLineType, setActiveLineType] = useState('text')
+  const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const [deleteToast, setDeleteToast] = useState(null) // { snapshot, removed, tasksSnapshot }
 
   useEffect(() => {
     if (tasksLoaded && savedTasks.length > 0) {
@@ -164,8 +171,14 @@ export default function App() {
         persistTasks(updated)
         return updated
       })
+    } else if (last.type === 'categoryDelete') {
+      persistCategories(last.snapshot)
+      setTasks(last.tasksSnapshot)
+      persistTasks(last.tasksSnapshot)
+      setDeleteToast(null)
+      clearTimeout(deleteToastTimerRef.current)
     }
-  }, [undoStack, updateLines, persistTasks, removeCompleted, setSorted])
+  }, [undoStack, updateLines, persistTasks, removeCompleted, setSorted, persistCategories])
 
   // Cmd/Ctrl+Z — must live AFTER handleUndo is declared to avoid TDZ crash
   useEffect(() => {
@@ -190,7 +203,7 @@ export default function App() {
     setError(null)
 
     try {
-      const claudeTasks = await categorizeTasks(blobText, categoryRules)
+      const claudeTasks = await categorizeTasks(blobText, categoryRules, categories)
 
       // Filter out already-completed tasks
       const completedNorm = new Set((savedCompleted || []).map(t => t.text?.toLowerCase().trim()))
@@ -221,7 +234,40 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [blobText, categoryRules, lines, loading, updateLines, persistTasks, savedCompleted, persistPreSortBlob, tasks, pushUndo])
+  }, [blobText, categoryRules, categories, lines, loading, updateLines, persistTasks, savedCompleted, persistPreSortBlob, tasks, pushUndo])
+
+  const handleReassignTasks = useCallback((fromName, toName) => {
+    if (!fromName || !toName || fromName === toName) return
+    setTasks(prev => {
+      const updated = prev.map(t =>
+        t.category === fromName ? { ...t, category: toName } : t
+      )
+      persistTasks(updated)
+      return updated
+    })
+  }, [persistTasks])
+
+  const handleCategoryDeleted = useCallback(({ removed, snapshot }) => {
+    const tasksSnapshot = tasks
+    pushUndo({ type: 'categoryDelete', snapshot, tasksSnapshot, removed })
+    setDeleteToast({ snapshot, removed, tasksSnapshot })
+    clearTimeout(deleteToastTimerRef.current)
+    deleteToastTimerRef.current = setTimeout(() => setDeleteToast(null), 5000)
+  }, [tasks, pushUndo])
+
+  const handleUndoCategoryDelete = useCallback(() => {
+    if (!deleteToast) return
+    persistCategories(deleteToast.snapshot)
+    setTasks(deleteToast.tasksSnapshot)
+    persistTasks(deleteToast.tasksSnapshot)
+    setDeleteToast(null)
+    clearTimeout(deleteToastTimerRef.current)
+    setUndoStack(prev => {
+      const last = prev[prev.length - 1]
+      if (last?.type === 'categoryDelete') return prev.slice(0, -1)
+      return prev
+    })
+  }, [deleteToast, persistCategories, persistTasks])
 
   const handleComplete = useCallback((task) => {
     // Push to undo stack and remove from sorted view immediately
@@ -363,7 +409,6 @@ export default function App() {
       )}
 
       <div className="contentCol">
-      <div className="app">
 
       {view === VIEW_NOTE_EDITOR ? (
         <NoteEditor
@@ -376,71 +421,104 @@ export default function App() {
           isSidebarOpen={sidebarOpen}
         />
       ) : (
-        <>
-          <MenuBar
-            onSidebarOpen={toggleSidebar}
-            onSort={handleSort}
-            onSummary={() => setShowSummary(true)}
-            onChecklist={() => blobRef.current?.toggleChecklist()}
-            onBullet={() => blobRef.current?.toggleBullet()}
-            onUndo={handleUndo}
-            isSidebarOpen={sidebarOpen}
-            loading={loading}
-            sortDone={sortDone}
-            title="all in one"
-            onFormat={(type) => blobRef.current?.format(type)}
-            activeLineType={activeLineType}
-          />
-
-          <Blob
-            ref={blobRef}
-            lines={lines}
-            onChange={updateLines}
-            onBeforeLineDelete={handleBeforeLineDelete}
-            onLineTypeChange={setActiveLineType}
-            disabled={!blobLoaded}
-          />
-
-          {loading && <SkeletonLoader />}
-
-          {!loading && error && (
-            <div style={{ padding: 'var(--space-md) var(--space-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-placeholder)', flex: 1 }}>
-                {error}
-              </span>
-              <button
-                onClick={handleSort}
-                style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', padding: '0 var(--space-sm)', minHeight: '32px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-              >
-                retry
-              </button>
+        <div className="workspace">
+          <div className={`toolbarStrip${categoriesOpen ? ' toolbarStripCatOpen' : ''}`}>
+            <div className="toolbarMain">
+              <div className="app">
+                <MenuBar
+                  onSidebarOpen={toggleSidebar}
+                  onSort={handleSort}
+                  onCategories={() => setCategoriesOpen(v => !v)}
+                  categoriesOpen={categoriesOpen}
+                  categoriesBtnRef={categoriesBtnRef}
+                  onSummary={() => setShowSummary(true)}
+                  onChecklist={() => blobRef.current?.toggleChecklist()}
+                  onBullet={() => blobRef.current?.toggleBullet()}
+                  onUndo={handleUndo}
+                  isSidebarOpen={sidebarOpen}
+                  loading={loading}
+                  sortDone={sortDone}
+                  title="All in one"
+                  onFormat={(type) => blobRef.current?.format(type)}
+                  activeLineType={activeLineType}
+                />
+              </div>
             </div>
-          )}
+            <div className="toolbarRailGutter" aria-hidden="true" />
+          </div>
 
-          {!loading && sorted && (
-            <SortedView
-              tasks={tasks}
-              completingItems={completingItems}
-              onComplete={handleComplete}
-              onPriorityChange={handlePriorityChange}
-              onCategoryChange={handleCategoryChange}
-              onTextChange={handleTextChange}
-              onAddAfter={handleAddAfter}
-              newTaskId={newTaskId}
-              onDeleteSelected={handleDeleteTasks}
-              completedTasks={savedCompleted}
-              onUncheck={handleUncheck}
-              completedSectionRef={completedSectionRef}
+          <div className="workspaceBody">
+            <div className="mainPane">
+              <div className="app">
+                <Blob
+                  ref={blobRef}
+                  lines={lines}
+                  onChange={updateLines}
+                  onBeforeLineDelete={handleBeforeLineDelete}
+                  onLineTypeChange={setActiveLineType}
+                  disabled={!blobLoaded}
+                />
+
+                <CategoriesGuide onEdit={() => setCategoriesOpen(true)} />
+
+                {loading && <SkeletonLoader />}
+
+                {!loading && error && (
+                  <div style={{ padding: 'var(--space-md) var(--space-md) 0', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-placeholder)', flex: 1 }}>
+                      {error}
+                    </span>
+                    <button
+                      onClick={handleSort}
+                      style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', padding: '0 var(--space-sm)', minHeight: '32px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                {!loading && sorted && (
+                  <SortedView
+                    tasks={tasks}
+                    categories={categories}
+                    completingItems={completingItems}
+                    onComplete={handleComplete}
+                    onPriorityChange={handlePriorityChange}
+                    onCategoryChange={handleCategoryChange}
+                    onTextChange={handleTextChange}
+                    onAddAfter={handleAddAfter}
+                    newTaskId={newTaskId}
+                    onDeleteSelected={handleDeleteTasks}
+                    completedTasks={savedCompleted}
+                    onUncheck={handleUncheck}
+                    completedSectionRef={completedSectionRef}
+                  />
+                )}
+
+                {showSummary && (
+                  <SummaryPanel tasks={tasks} onClose={() => setShowSummary(false)} />
+                )}
+              </div>
+            </div>
+
+            <CategoriesPanel
+              open={categoriesOpen}
+              categories={categories}
+              onChange={persistCategories}
+              onReassignTasks={handleReassignTasks}
+              onClose={() => setCategoriesOpen(false)}
+              onDeleted={handleCategoryDeleted}
+              onUndoDelete={handleUndoCategoryDelete}
+              deleteToast={deleteToast}
+              onDismissToast={() => {
+                setDeleteToast(null)
+                clearTimeout(deleteToastTimerRef.current)
+              }}
             />
-          )}
-
-          {showSummary && (
-            <SummaryPanel tasks={tasks} onClose={() => setShowSummary(false)} />
-          )}
-        </>
+          </div>
+        </div>
       )}
 
-      </div>
       </div>
       {import.meta.env.DEV && <Agentation />}
     </div>

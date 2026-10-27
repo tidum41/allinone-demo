@@ -11,16 +11,21 @@
   flex: 1;
   overflow-y: auto;
   padding-top: max(env(safe-area-inset-top, 0px), 52px);
+  scrollbar-width: none;
 }
 
-/* Pinned: all in one */
+.inner::-webkit-scrollbar {
+  display: none;
+}
+
 .mainEntry {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   width: 100%;
-  padding: var(--space-md) var(--space-md);
-  min-height: 52px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 16px;
   text-align: left;
 }
 
@@ -28,45 +33,48 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
+  line-height: 1;
 }
 
-.mainEntryTag {
-  font-size: 10px;
-  color: var(--color-text-placeholder);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.entryIcon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
 }
 
 .divider {
   height: 1px;
   background: var(--color-border);
-  margin: 0 var(--space-md);
+  margin: 8px 16px;
 }
 
 .notesList {
-  padding: 4px var(--space-sm);
+  padding: 0;
 }
 
 .noteItem {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
+  gap: 10px;
   width: 100%;
-  min-height: 36px;
-  padding: 4px var(--space-sm);
+  height: 32px;
+  min-height: 32px;
+  padding: 0 16px;
   text-align: left;
-  border-radius: 6px;
-  transition: box-shadow 80ms ease, background 80ms ease;
+  border-radius: 0;
+  transition: background 80ms ease;
 }
 
 .noteItem:hover {
-  box-shadow: inset 0 0 0 1px var(--color-border);
+  background: color-mix(in srgb, var(--color-border) 55%, transparent);
 }
 
 .noteItem:active {
   background: var(--color-border);
-  box-shadow: none;
 }
 
 .noteTitle {
@@ -76,12 +84,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.noteDate {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-placeholder);
-  flex-shrink: 0;
 }
 
 .empty {
@@ -126,12 +128,4 @@
 .themeBtn:hover,
 .themeBtn:active {
   color: var(--color-text-primary);
-}
-
-/* Suppress scrollbar on desktop when many notes */
-.inner {
-  scrollbar-width: none;
-}
-.inner::-webkit-scrollbar {
-  display: none;
 }
