@@ -104,6 +104,10 @@ async function main() {
           text: el.textContent.trim(),
           checked: el.getAttribute('aria-checked') === 'true',
         }))
+        const dots = [...m.querySelectorAll('[data-aio-priority-dot]')].map((el) => ({
+          tone: el.getAttribute('data-aio-priority-dot'),
+          bg: getComputedStyle(el).backgroundColor,
+        }))
         return {
           radius: cs.borderRadius,
           padding: cs.padding,
@@ -112,6 +116,8 @@ async function main() {
             ? getComputedStyle(m.querySelector('[role="menuitemradio"]')).minHeight
             : null,
           items,
+          dots,
+          surface: cs.backgroundColor,
         }
       })
       report[`1440-${theme}-menu`] = menu
@@ -197,6 +203,13 @@ async function main() {
   console.log(md)
   console.log('Artifacts:', OUT)
 
+  // Light badge hues — menu dots must use these in both themes
+  const DOT_RGB = {
+    urgent: 'rgb(224, 206, 219)',
+    soon: 'rgb(204, 198, 220)',
+    eventually: 'rgb(200, 210, 208)',
+  }
+
   const failures = []
   for (const theme of ['light', 'dark']) {
     const menu = report[`1440-${theme}-menu`]
@@ -210,6 +223,11 @@ async function main() {
         if (!labels.includes(want)) failures.push(`${theme} missing ${want}`)
       }
       if (!menu.items?.some((i) => i.checked)) failures.push(`${theme} none checked`)
+      for (const d of menu.dots || []) {
+        if (d.bg !== DOT_RGB[d.tone]) {
+          failures.push(`${theme} dot-${d.tone}=${d.bg} (want ${DOT_RGB[d.tone]})`)
+        }
+      }
     }
     const mob = report[`390-${theme}-menu`]
     if (mob?.itemCount !== 4) failures.push(`390-${theme} itemCount=${mob?.itemCount}`)

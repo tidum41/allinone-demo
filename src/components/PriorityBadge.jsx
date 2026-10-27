@@ -126,7 +126,8 @@ export function PriorityBadge({ priority, onChange }) {
                 opt.tone ? (
                   <span
                     className={styles.menuDot}
-                    style={{ background: `var(--color-${opt.tone})` }}
+                    data-aio-priority-dot={opt.tone}
+                    style={{ background: `var(--color-${opt.tone}-dot)` }}
                     aria-hidden="true"
                   />
                 ) : (

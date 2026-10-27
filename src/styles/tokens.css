@@ -22,10 +22,14 @@
   --color-personal: #D9B8BF;
   --color-thinking: #D0D0D0;
 
-  /* Priority — from palette */
+  /* Priority — badge fills from palette */
   --color-urgent: #E0CEDB;
   --color-soon: #CCC6DC;
   --color-eventually: #C8D2D0;
+  /* Menu / swatch dots — same hue family; stay legible on surface in both themes */
+  --color-urgent-dot: #E0CEDB;
+  --color-soon-dot: #CCC6DC;
+  --color-eventually-dot: #C8D2D0;
 
   /* Sort button */
   --color-sort-bg: #1A1A1A;
@@ -86,9 +90,14 @@
   --color-personal: #B87A88;
   --color-thinking: #888888;
 
+  /* Badge fills stay muted on dark UI */
   --color-urgent: #3A2E38;
   --color-soon: #2C2B3C;
   --color-eventually: #262E2D;
+  /* Dots keep the light badge hues so they read on dark menus */
+  --color-urgent-dot: #E0CEDB;
+  --color-soon-dot: #CCC6DC;
+  --color-eventually-dot: #C8D2D0;
 
   --color-sort-bg: #EDEDF0;
   --color-sort-fg: #1C1C1E;
