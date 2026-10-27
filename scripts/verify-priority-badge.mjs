@@ -1,5 +1,6 @@
 /**
- * PriorityBadge discoverability shots: 1440 hover + 390 rest, light/dark.
+ * PriorityBadge discoverability shots:
+ * 1440 hover × each urgency × light/dark; 390 rest × light/dark.
  */
 import { chromium, devices } from 'playwright'
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -8,6 +9,8 @@ import { join } from 'node:path'
 const BASE = process.env.BASE_URL || 'http://localhost:3200'
 const OUT = process.env.ARTIFACT_DIR || '/opt/cursor/artifacts/priority-badge'
 const PREVIEW = process.env.PREVIEW_DIR || '/workspace/preview/shots/priority-badge'
+
+const URGENCIES = ['urgent', 'soon', 'eventually']
 
 const SAMPLE_TASKS = [
   {
@@ -61,24 +64,56 @@ async function shot(page, dirs, name) {
   }
 }
 
-async function measureBadge(page) {
-  return page.evaluate(() => {
-    const badge = document.querySelector('[data-aio-priority-badge]')
-    if (!badge) return null
+async function measureBadge(locator) {
+  return locator.evaluate((badge) => {
+    const label = badge.querySelector('[class*="label"]')
     const chevron = badge.querySelector('[class*="chevron"]')
     const r = badge.getBoundingClientRect()
     const cs = getComputedStyle(badge)
+    const ls = label ? getComputedStyle(label) : null
     const ch = chevron ? getComputedStyle(chevron) : null
     return {
+      text: label?.textContent || null,
       title: badge.getAttribute('title'),
-      aria: badge.getAttribute('aria-label'),
       width: +r.width.toFixed(1),
       cursor: cs.cursor,
+      color: cs.color,
+      labelColor: ls?.color || null,
+      labelOpacity: ls ? parseFloat(ls.opacity) : null,
       boxShadow: cs.boxShadow,
       chevronOpacity: ch ? parseFloat(ch.opacity) : null,
-      emptyTitle: document.querySelector('[aria-label="Add urgency"]')?.getAttribute('title') || null,
     }
   })
+}
+
+function parseRgb(str) {
+  if (!str) return null
+  const m = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+  if (!m) return null
+  return [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)]
+}
+
+function colorsEqual(a, b) {
+  const A = parseRgb(a)
+  const B = parseRgb(b)
+  if (!A || !B) return a === b
+  return A[0] === B[0] && A[1] === B[1] && A[2] === B[2]
+}
+
+/** Ring uses currentColor at ~35–45% alpha (color-mix). */
+function ringAlphaOk(boxShadow, labelColor) {
+  if (!boxShadow || !boxShadow.includes('inset')) return false
+  const m = boxShadow.match(/rgba?\(([^)]+)\)/)
+  if (!m) return false
+  const parts = m[1].split(',').map((s) => s.trim())
+  if (parts.length < 4) {
+    // solid rgb inset — reject (we want alpha mix)
+    return false
+  }
+  const alpha = parseFloat(parts[3])
+  if (!(alpha >= 0.35 && alpha <= 0.45)) return false
+  const ringRgb = `rgb(${parts[0]}, ${parts[1]}, ${parts[2]})`
+  return colorsEqual(ringRgb, labelColor)
 }
 
 async function main() {
@@ -86,11 +121,12 @@ async function main() {
   mkdirSync(PREVIEW, { recursive: true })
   const dirs = [OUT, PREVIEW]
   const report = {}
+  const rows = []
 
   const browser = await chromium.launch({ headless: true })
 
   for (const theme of ['light', 'dark']) {
-    // 1440 hover
+    // 1440 — hover each urgency
     {
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },
@@ -103,20 +139,40 @@ async function main() {
       await page.reload({ waitUntil: 'networkidle' })
       await setTheme(page, theme)
       await page.waitForSelector('[data-aio-priority-badge]', { timeout: 15000 })
-      const badge = page.locator('[data-aio-priority-badge]').first()
-      await badge.scrollIntoViewIfNeeded()
-      await page.waitForTimeout(200)
 
-      const before = await measureBadge(page)
-      await badge.hover()
-      await page.waitForTimeout(200)
-      const after = await measureBadge(page)
-      report[`1440-${theme}-hover`] = { before, after }
-      await shot(page, dirs, `1440-${theme}-hover`)
+      for (const urgency of URGENCIES) {
+        const badge = page.locator('[data-aio-priority-badge]', { hasText: urgency }).first()
+        await badge.scrollIntoViewIfNeeded()
+        await page.waitForTimeout(120)
+        const before = await measureBadge(badge)
+        await badge.hover()
+        await page.waitForTimeout(200)
+        const after = await measureBadge(badge)
+        const key = `1440-${theme}-hover-${urgency}`
+        report[key] = { before, after }
+        await shot(page, dirs, key)
+
+        // Move pointer away so the next badge starts from rest
+        await page.mouse.move(8, 8)
+        await page.waitForTimeout(120)
+
+        rows.push({
+          shot: key,
+          labelColorBefore: before.labelColor,
+          labelColorAfter: after.labelColor,
+          labelStable: colorsEqual(before.labelColor, after.labelColor) && before.labelOpacity === 1 && after.labelOpacity === 1,
+          ringOk: ringAlphaOk(after.boxShadow, after.labelColor),
+          boxShadow: after.boxShadow,
+          chevronOpacity: after.chevronOpacity,
+          widthJump: Math.abs(after.width - before.width),
+          cursor: after.cursor,
+          title: after.title,
+        })
+      }
       await context.close()
     }
 
-    // 390 rest (touch-ish: hover none via iPhone emulation)
+    // 390 rest
     {
       const iPhone = devices['iPhone 13']
       const context = await browser.newContext({
@@ -136,11 +192,24 @@ async function main() {
       const badge = page.locator('[data-aio-priority-badge]').first()
       await badge.scrollIntoViewIfNeeded()
       await page.waitForTimeout(200)
-      const rest = await measureBadge(page)
-      // Confirm hover:none media matches
+      const rest = await measureBadge(badge)
       const touchMedia = await page.evaluate(() => window.matchMedia('(hover: none)').matches)
-      report[`390-${theme}-rest`] = { rest, touchMedia }
-      await shot(page, dirs, `390-${theme}-rest`)
+      const key = `390-${theme}-rest`
+      report[key] = { rest, touchMedia }
+      await shot(page, dirs, key)
+      rows.push({
+        shot: key,
+        labelColorBefore: rest.labelColor,
+        labelColorAfter: rest.labelColor,
+        labelStable: rest.labelOpacity === 1,
+        ringOk: true, // rest has no ring
+        boxShadow: rest.boxShadow,
+        chevronOpacity: rest.chevronOpacity,
+        widthJump: 0,
+        cursor: rest.cursor,
+        title: rest.title,
+        touchMedia,
+      })
       await context.close()
     }
   }
@@ -150,24 +219,10 @@ async function main() {
   writeFileSync(join(OUT, 'measure.json'), JSON.stringify(report, null, 2))
   writeFileSync(join(PREVIEW, 'measure.json'), JSON.stringify(report, null, 2))
 
-  const rows = Object.entries(report).map(([k, v]) => {
-    const m = v.after || v.rest
-    return {
-      shot: k,
-      title: m?.title,
-      aria: m?.aria,
-      width: m?.width,
-      cursor: m?.cursor,
-      chevronOpacity: m?.chevronOpacity,
-      hasInsetRing: m?.boxShadow?.includes('inset') && !m?.boxShadow?.includes('rgba(0, 0, 0, 0)') && m?.boxShadow !== 'none',
-      boxShadow: m?.boxShadow,
-      emptyTitle: m?.emptyTitle ?? v.after?.emptyTitle ?? v.before?.emptyTitle,
-      touchMedia: v.touchMedia ?? false,
-      widthJump: v.before && v.after ? Math.abs(v.after.width - v.before.width) : 0,
-    }
-  })
-
-  const cols = ['shot', 'title', 'chevronOpacity', 'width', 'widthJump', 'cursor', 'hasInsetRing', 'emptyTitle', 'touchMedia']
+  const cols = [
+    'shot', 'labelStable', 'labelColorAfter', 'ringOk', 'chevronOpacity',
+    'widthJump', 'cursor', 'title',
+  ]
   const md = [
     `| ${cols.join(' | ')} |`,
     `| ${cols.map(() => '---').join(' | ')} |`,
@@ -181,19 +236,17 @@ async function main() {
 
   const failures = []
   for (const r of rows) {
-    if (r.title !== 'Change urgency') failures.push(`${r.shot} title=${r.title}`)
+    if (!r.labelStable) failures.push(`${r.shot} labelUnstable ${r.labelColorBefore}→${r.labelColorAfter}`)
     if (r.cursor !== 'pointer') failures.push(`${r.shot} cursor=${r.cursor}`)
-    if (r.emptyTitle !== 'Add urgency') failures.push(`${r.shot} emptyTitle=${r.emptyTitle}`)
+    if (r.title !== 'Change urgency') failures.push(`${r.shot} title=${r.title}`)
     if (r.shot.includes('1440')) {
-      if (!(r.chevronOpacity >= 0.9)) failures.push(`${r.shot} chevronOpacity=${r.chevronOpacity}`)
+      if (!r.ringOk) failures.push(`${r.shot} ringBad shadow=${r.boxShadow}`)
+      if (!(r.chevronOpacity >= 0.9)) failures.push(`${r.shot} chevron=${r.chevronOpacity}`)
       if (r.widthJump > 1) failures.push(`${r.shot} widthJump=${r.widthJump}`)
-      if (!r.hasInsetRing && !(r.boxShadow || '').includes('inset')) {
-        failures.push(`${r.shot} missingInsetRing boxShadow=${r.boxShadow}`)
-      }
     }
     if (r.shot.includes('390')) {
       if (!(r.chevronOpacity > 0.2 && r.chevronOpacity < 0.8)) {
-        failures.push(`${r.shot} touchChevronOpacity=${r.chevronOpacity}`)
+        failures.push(`${r.shot} touchChevron=${r.chevronOpacity}`)
       }
       if (!r.touchMedia) failures.push(`${r.shot} hoverNoneNotMatched`)
     }
