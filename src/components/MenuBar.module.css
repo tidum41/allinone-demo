@@ -35,12 +35,21 @@
   color: var(--color-text-secondary);
   flex-shrink: 0;
   border-radius: var(--radius-sm);
-  transition: color var(--transition-fast);
+  transition: color var(--transition-fast), transform var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
 }
 
-.sidebarBtn:hover,
-.sidebarBtn:active,
+@media (hover: hover) {
+  .sidebarBtn:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.sidebarBtn:active {
+  color: var(--color-text-primary);
+  transform: scale(var(--press-scale));
+}
+
 .sidebarBtnActive {
   color: var(--color-text-primary);
 }
@@ -79,26 +88,26 @@
   align-items: center;
   justify-content: center;
   color: var(--color-text-secondary);
-  transition: color var(--transition-fast);
+  transition: color var(--transition-fast), transform var(--transition-fast), background var(--transition-fast);
   cursor: pointer;
   flex-shrink: 0;
   border-radius: var(--radius-sm);
   -webkit-tap-highlight-color: transparent;
 }
 
-.iconBtn:hover,
-.iconBtn:active,
+@media (hover: hover) {
+  .iconBtn:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.iconBtn:active {
+  color: var(--color-text-primary);
+  transform: scale(var(--press-scale));
+}
+
 .iconBtnActive {
   color: var(--color-text-primary);
-}
-
-.iconBtn:focus {
-  outline: none;
-}
-
-.iconBtn:focus-visible {
-  outline: 2px solid var(--color-text-secondary);
-  outline-offset: 2px;
 }
 
 .aaLabel {
@@ -131,7 +140,8 @@
   padding: 4px;
   z-index: 20;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  animation: popoverIn 130ms cubic-bezier(0.2, 0, 0, 1) both;
+  transform-origin: top right;
+  animation: popoverIn var(--dur-fast) var(--ease-out) both;
 }
 
 .formatBtn {
@@ -144,7 +154,18 @@
   color: var(--color-text-secondary);
   border-radius: var(--radius-sm);
   font-family: var(--font-family);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+@media (hover: hover) {
+  .formatBtn:hover {
+    background: var(--color-border);
+    color: var(--color-text-primary);
+  }
+}
+
+.formatBtn:active {
+  transform: scale(var(--press-scale));
 }
 
 .formatBtnOn {
@@ -172,7 +193,7 @@
   flex-shrink: 0;
   white-space: nowrap;
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -182,8 +203,14 @@
   flex-shrink: 0;
 }
 
-.categoriesBtn:hover {
-  background: var(--color-border);
+@media (hover: hover) {
+  .categoriesBtn:hover {
+    background: var(--color-border);
+  }
+}
+
+.categoriesBtn:active {
+  transform: scale(var(--press-scale));
 }
 
 .categoriesBtnActive,
@@ -215,18 +242,20 @@
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-full);
   letter-spacing: 0.01em;
-  transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 120ms ease;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
 }
 
-.sortBtn:hover:not(:disabled) {
-  opacity: 0.88;
+@media (hover: hover) {
+  .sortBtn:hover:not(:disabled) {
+    opacity: 0.88;
+  }
 }
 
 .sortBtn:active:not(:disabled) {
-  transform: scale(0.93);
+  transform: scale(var(--press-scale));
 }
 
 .sortBtn:disabled {
@@ -238,7 +267,7 @@
 }
 
 @keyframes labelIn {
-  from { opacity: 0; transform: scale(0.8); }
+  from { opacity: 0; transform: scale(0.95); }
   to   { opacity: 1; transform: scale(1); }
 }
 
@@ -246,7 +275,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: labelIn 200ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: labelIn var(--dur-base) var(--ease-out) both;
 }
 
 .spinner {

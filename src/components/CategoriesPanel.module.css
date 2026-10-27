@@ -29,7 +29,7 @@
   width: 0;
   overflow: hidden;
   align-self: stretch;
-  transition: width 200ms ease-out;
+  transition: width var(--dur-base) var(--ease-out);
 }
 
 .railSlotOpen {
@@ -51,7 +51,7 @@
   border-left: 1px solid var(--color-border);
   overflow: hidden;
   transform: translateX(100%);
-  transition: transform 200ms ease-out;
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
 .railSlotOpen .rail {
@@ -66,12 +66,12 @@
   bottom: 0;
   z-index: 40;
   transform: translateX(0);
-  animation: railSlideIn 200ms ease-out;
+  animation: railSlideIn var(--dur-base) var(--ease-out);
 }
 
 @keyframes railSlideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from { opacity: 0; transform: translateX(12px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
 }
 
 .sheet {
@@ -143,13 +143,23 @@
   color: var(--color-text-secondary);
   border-radius: var(--radius-sm);
   -webkit-tap-highlight-color: transparent;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
 }
 
-.closeBtn:hover,
+@media (hover: hover) {
+  .closeBtn:hover {
+    color: var(--color-text-primary);
+    background: var(--color-border);
+  }
+}
+
 .closeBtn:focus-visible {
   color: var(--color-text-primary);
   background: var(--color-border);
+}
+
+.closeBtn:active {
+  transform: scale(var(--press-scale));
 }
 
 .purpose {
@@ -205,8 +215,10 @@
   will-change: transform;
 }
 
-.row:hover {
-  background: color-mix(in srgb, var(--color-border) 45%, var(--color-surface));
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--color-border) 45%, var(--color-surface));
+  }
 }
 
 .swatch {
@@ -292,63 +304,24 @@
   color: var(--color-text-secondary);
   border-radius: var(--radius-sm);
   -webkit-tap-highlight-color: transparent;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
 }
 
-.moreBtn:hover,
+@media (hover: hover) {
+  .moreBtn:hover {
+    color: var(--color-text-primary);
+    background: var(--color-border);
+  }
+}
+
 .moreBtn:focus-visible,
 .moreBtn[aria-expanded="true"] {
   color: var(--color-text-primary);
   background: var(--color-border);
 }
 
-.menuPortal {
-  position: fixed;
-  z-index: 240;
-  min-width: 132px;
-  padding: 4px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  animation: fadeIn 120ms ease;
-}
-
-.menuItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: 6px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-  text-align: left;
-}
-
-.menuItem:hover,
-.menuItem:focus-visible {
-  background: var(--color-border);
-}
-
-.menuItemDanger {
-  color: var(--color-text-secondary);
-}
-
-.menuItemDanger:hover,
-.menuItemDanger:focus-visible {
-  color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
-}
-
-.menuItemDanger .menuIcon {
-  color: inherit;
-}
-
-.menuIcon {
-  display: flex;
-  color: var(--color-text-secondary);
+.moreBtn:active {
+  transform: translate(-50%, -50%) scale(var(--press-scale));
 }
 
 .palette {
@@ -400,9 +373,18 @@
   text-align: left;
 }
 
-.addRow:hover,
+@media (hover: hover) {
+  .addRow:hover {
+    color: var(--color-text-primary);
+  }
+}
+
 .addRow:focus-visible {
   color: var(--color-text-primary);
+}
+
+.addRow:active {
+  opacity: 0.7;
 }
 
 .confirmScrim {
@@ -422,6 +404,13 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
+  transform-origin: center;
+  animation: confirmIn var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes confirmIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .confirmText {
@@ -477,12 +466,12 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
-  animation: toastIn 160ms ease;
+  animation: toastIn var(--dur-fast) var(--ease-out) both;
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
 .toastUndo {
@@ -493,6 +482,13 @@
   color: var(--color-text-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  border-radius: var(--radius-sm);
+}
+
+.toastUndo:active {
+  opacity: 0.7;
+  transform: scale(var(--press-scale));
 }
 
 @media (max-width: 680px) {

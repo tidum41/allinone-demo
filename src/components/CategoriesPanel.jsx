@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import {
   CATEGORY_COLORS,
   makeCategoryId,
@@ -8,6 +7,7 @@ import {
   UNSORTED_NAME,
 } from '../lib/categories'
 import { CloseIcon, MoreIcon, TrashIcon } from './icons'
+import { PopoverMenu, PopoverMenuItem } from './PopoverMenu'
 import styles from './CategoriesPanel.module.css'
 
 const MOBILE_MQ = '(max-width: 680px)'
@@ -52,7 +52,6 @@ export function CategoriesPanel({
 
   const [paletteId, setPaletteId] = useState(null)
   const [menuId, setMenuId] = useState(null)
-  const [menuPos, setMenuPos] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [detent, setDetent] = useState('medium') // medium | large
   const [sheetHeight, setSheetHeight] = useState(null)
@@ -62,23 +61,18 @@ export function CategoriesPanel({
   const dragRef = useRef(null)
   const nameRefs = useRef({})
   const moreBtnRefs = useRef({})
+  const menuAnchorRef = useRef(null)
+
+  const closeRowMenu = useCallback(() => {
+    setMenuId(null)
+    menuAnchorRef.current = null
+  }, [])
 
   const openMenu = useCallback((id) => {
-    const btn = moreBtnRefs.current[id]
-    if (!btn) {
-      setMenuId(id)
-      return
-    }
-    const r = btn.getBoundingClientRect()
-    const menuH = categories.length > 1 ? 80 : 44
-    const top = r.bottom + 4 + menuH > window.innerHeight
-      ? Math.max(8, r.top - menuH - 4)
-      : r.bottom + 4
-    const left = Math.max(8, r.right - 132)
-    setMenuPos({ top, left })
+    menuAnchorRef.current = moreBtnRefs.current[id] || null
     setMenuId(id)
     setPaletteId(null)
-  }, [categories.length])
+  }, [])
 
   const targetHeight = useCallback((which) => {
     const vh = window.innerHeight
@@ -89,7 +83,7 @@ export function CategoriesPanel({
     if (!open) {
       setPaletteId(null)
       setMenuId(null)
-      setMenuPos(null)
+      menuAnchorRef.current = null
       setConfirm(null)
       setSwipeX({})
       setDetent('medium')
@@ -102,10 +96,8 @@ export function CategoriesPanel({
     const onKey = (e) => {
       if (e.key === 'Escape') {
         if (confirm) setConfirm(null)
-        else if (menuId) {
-          setMenuId(null)
-          setMenuPos(null)
-        } else onClose()
+        else if (menuId) closeRowMenu()
+        else onClose()
       }
     }
     window.addEventListener('keydown', onKey)
@@ -113,7 +105,7 @@ export function CategoriesPanel({
       window.removeEventListener('keydown', onKey)
       document.documentElement.removeAttribute('data-categories-open')
     }
-  }, [open, confirm, menuId, onClose])
+  }, [open, confirm, menuId, onClose, closeRowMenu])
 
   useEffect(() => {
     if (!open || !isMobile) return
@@ -160,25 +152,9 @@ export function CategoriesPanel({
 
   const requestDelete = (cat) => {
     if (categories.length <= 1) return
-    setMenuId(null)
-    setMenuPos(null)
+    closeRowMenu()
     setConfirm({ id: cat.id, name: cat.name })
   }
-
-  useEffect(() => {
-    if (!menuId) return
-    const onDown = (e) => {
-      if (e.target.closest?.('[data-aio-cat-menu]') || e.target.closest?.('[data-aio-cat-more]')) return
-      setMenuId(null)
-      setMenuPos(null)
-    }
-    document.addEventListener('mousedown', onDown)
-    document.addEventListener('touchstart', onDown, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('touchstart', onDown)
-    }
-  }, [menuId])
 
   const performDelete = () => {
     if (!confirm) return
@@ -393,12 +369,8 @@ export function CategoriesPanel({
                     data-aio-cat-more
                     ref={(el) => { moreBtnRefs.current[cat.id] = el }}
                     onClick={() => {
-                      if (menuId === cat.id) {
-                        setMenuId(null)
-                        setMenuPos(null)
-                      } else {
-                        openMenu(cat.id)
-                      }
+                      if (menuId === cat.id) closeRowMenu()
+                      else openMenu(cat.id)
                     }}
                   >
                     <MoreIcon />
@@ -521,44 +493,38 @@ export function CategoriesPanel({
         </>
       )}
 
-      {menuId && menuPos && createPortal(
-        <div
-          className={styles.menuPortal}
-          role="menu"
-          data-aio-cat-menu
-          style={{ top: menuPos.top, left: menuPos.left }}
+      <PopoverMenu
+        open={!!menuId}
+        anchorRef={menuAnchorRef}
+        onClose={closeRowMenu}
+        minWidth={132}
+        estimatedHeight={categories.length > 1 ? 80 : 44}
+        align="end"
+        data-menu="categories"
+      >
+        <PopoverMenuItem
+          onSelect={() => {
+            const id = menuId
+            closeRowMenu()
+            setPaletteId(id)
+            nameRefs.current[id]?.focus()
+          }}
         >
-          <button
-            type="button"
-            role="menuitem"
-            className={styles.menuItem}
-            onClick={() => {
-              const id = menuId
-              setMenuId(null)
-              setMenuPos(null)
-              setPaletteId(id)
-              nameRefs.current[id]?.focus()
+          Edit
+        </PopoverMenuItem>
+        {categories.length > 1 && (
+          <PopoverMenuItem
+            danger
+            leading={<TrashIcon />}
+            onSelect={() => {
+              const cat = categories.find((c) => c.id === menuId)
+              if (cat) requestDelete(cat)
             }}
           >
-            Edit
-          </button>
-          {categories.length > 1 && (
-            <button
-              type="button"
-              role="menuitem"
-              className={`${styles.menuItem} ${styles.menuItemDanger}`}
-              onClick={() => {
-                const cat = categories.find((c) => c.id === menuId)
-                if (cat) requestDelete(cat)
-              }}
-            >
-              <span className={styles.menuIcon}><TrashIcon /></span>
-              Delete
-            </button>
-          )}
-        </div>,
-        document.body
-      )}
+            Delete
+          </PopoverMenuItem>
+        )}
+      </PopoverMenu>
 
       {deleteToast && (
         <div className={styles.toast} role="status" onClick={onDismissToast}>

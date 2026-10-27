@@ -22,10 +22,14 @@
   --color-personal: #D9B8BF;
   --color-thinking: #D0D0D0;
 
-  /* Priority — from palette */
+  /* Priority — badge fills from palette */
   --color-urgent: #E0CEDB;
   --color-soon: #CCC6DC;
   --color-eventually: #C8D2D0;
+  /* Menu / swatch dots — same hue family; stay legible on surface in both themes */
+  --color-urgent-dot: #E0CEDB;
+  --color-soon-dot: #CCC6DC;
+  --color-eventually-dot: #C8D2D0;
 
   /* Sort button */
   --color-sort-bg: #1A1A1A;
@@ -53,9 +57,19 @@
   --radius-md: 12px;
   --radius-full: 999px;
 
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 300ms ease;
+  /* Motion — Emil-aligned: ease-out, 150–250ms UI, shared everywhere */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-soft: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 250ms;
+  --press-scale: 0.97;
+  --focus-ring: 2px solid var(--color-text-secondary);
+  --focus-offset: 2px;
+
+  /* Back-compat aliases */
+  --transition-fast: var(--dur-fast) var(--ease-out);
+  --transition-normal: var(--dur-base) var(--ease-out);
 }
 
 [data-theme="dark"] {
@@ -76,9 +90,14 @@
   --color-personal: #B87A88;
   --color-thinking: #888888;
 
+  /* Badge fills stay muted on dark UI */
   --color-urgent: #3A2E38;
   --color-soon: #2C2B3C;
   --color-eventually: #262E2D;
+  /* Dots keep the light badge hues so they read on dark menus */
+  --color-urgent-dot: #E0CEDB;
+  --color-soon-dot: #CCC6DC;
+  --color-eventually-dot: #C8D2D0;
 
   --color-sort-bg: #EDEDF0;
   --color-sort-fg: #1C1C1E;

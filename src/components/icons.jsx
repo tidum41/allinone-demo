@@ -131,7 +131,7 @@ export function CloseIcon() {
   )
 }
 
-/** 8px chevron for PriorityBadge hover affordance */
+/** 8px chevron for PriorityBadge */
 export function ChevronDownIcon({ size = 8 } = {}) {
   return (
     <svg
@@ -148,6 +148,15 @@ export function ChevronDownIcon({ size = 8 } = {}) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+/** 16px check for menu selection */
+export function CheckIcon() {
+  return (
+    <svg {...svgProps}>
+      <path d="M3.25 8.25l3 3 6.5-6.5" {...stroke} />
     </svg>
   )
 }
