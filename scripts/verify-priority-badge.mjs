@@ -103,9 +103,10 @@ async function main() {
       await page.reload({ waitUntil: 'networkidle' })
       await setTheme(page, theme)
       await page.waitForSelector('[data-aio-priority-badge]', { timeout: 15000 })
+      const badge = page.locator('[data-aio-priority-badge]').first()
+      await badge.scrollIntoViewIfNeeded()
       await page.waitForTimeout(200)
 
-      const badge = page.locator('[data-aio-priority-badge]').first()
       const before = await measureBadge(page)
       await badge.hover()
       await page.waitForTimeout(200)
@@ -132,6 +133,8 @@ async function main() {
       await page.reload({ waitUntil: 'networkidle' })
       await setTheme(page, theme)
       await page.waitForSelector('[data-aio-priority-badge]', { timeout: 15000 })
+      const badge = page.locator('[data-aio-priority-badge]').first()
+      await badge.scrollIntoViewIfNeeded()
       await page.waitForTimeout(200)
       const rest = await measureBadge(page)
       // Confirm hover:none media matches
