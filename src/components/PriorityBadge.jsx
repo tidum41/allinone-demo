@@ -1,3 +1,4 @@
+import { ChevronDownIcon } from './icons'
 import styles from './PriorityBadge.module.css'
 
 // Cycles: null → Urgent → Soon → Eventually → null
@@ -14,9 +15,11 @@ export function PriorityBadge({ priority, onChange }) {
   if (!priority) {
     return (
       <button
+        type="button"
         className={styles.badgeEmpty}
         onClick={handleClick}
-        aria-label="Add priority"
+        aria-label="Add urgency"
+        title="Add urgency"
       >
         +
       </button>
@@ -25,11 +28,17 @@ export function PriorityBadge({ priority, onChange }) {
 
   return (
     <button
+      type="button"
       className={`${styles.badge} ${styles[priority.toLowerCase()]}`}
       onClick={handleClick}
-      aria-label={`Priority: ${priority}. Tap to change.`}
+      aria-label={`${priority}. Change urgency`}
+      title="Change urgency"
+      data-aio-priority-badge
     >
-      {priority.toLowerCase()}
+      <span className={styles.label}>{priority.toLowerCase()}</span>
+      <span className={styles.chevron} aria-hidden="true">
+        <ChevronDownIcon />
+      </span>
     </button>
   )
 }

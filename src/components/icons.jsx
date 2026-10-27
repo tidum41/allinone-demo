@@ -130,3 +130,24 @@ export function CloseIcon() {
     </svg>
   )
 }
+
+/** 8px chevron for PriorityBadge hover affordance */
+export function ChevronDownIcon({ size = 8 } = {}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 8 8"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M1.75 3l2.25 2.25L6.25 3"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
