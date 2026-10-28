@@ -33,6 +33,7 @@
   padding: 0 10px;
   border-radius: 6px;
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-primary);
   text-align: left;
   cursor: pointer;

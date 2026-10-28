@@ -24,11 +24,13 @@
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-xl);
+  letter-spacing: var(--tracking-xl);
   color: var(--color-text-secondary);
 }
 
 .title {
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   font-weight: var(--font-weight-medium);
 }
 
@@ -49,12 +51,14 @@
 
 .noteTitle {
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   color: var(--color-text-primary);
   flex: 1;
 }
 
 .noteDate {
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-placeholder);
   flex-shrink: 0;
   margin-left: var(--space-sm);
@@ -63,5 +67,6 @@
 .empty {
   padding: var(--space-xl) var(--space-md);
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   color: var(--color-text-placeholder);
 }

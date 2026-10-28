@@ -154,6 +154,7 @@
 .text {
   display: block;
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   line-height: 1.65;
   color: var(--color-text-primary);
   word-break: break-word;
@@ -168,6 +169,7 @@
   background: transparent;
   font-family: var(--font-family);
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   line-height: 1.65;
   color: var(--color-text-primary);
   padding: 0;
