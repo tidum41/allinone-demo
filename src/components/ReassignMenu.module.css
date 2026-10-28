@@ -24,6 +24,7 @@
 .label {
   padding: 0 var(--space-md) var(--space-sm);
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-secondary);
 }
 
@@ -35,6 +36,7 @@
   min-height: 52px;
   padding: 0 var(--space-md);
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   color: var(--color-text-primary);
   text-align: left;
   transition: background var(--transition-fast);

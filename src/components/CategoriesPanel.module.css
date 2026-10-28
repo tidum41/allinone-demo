@@ -129,7 +129,7 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-md);
   text-align: left;
 }
 
@@ -166,6 +166,7 @@
   margin: 0;
   padding: 0 var(--cat-pad) 12px var(--cat-pad);
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   line-height: 1.45;
   color: var(--color-text-secondary);
   flex-shrink: 0;
@@ -197,6 +198,7 @@
   background: var(--color-danger);
   color: #fff;
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   font-weight: var(--font-weight-medium);
   z-index: 0;
 }
@@ -265,12 +267,13 @@
   line-height: 22px;
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-md);
 }
 
 .descInput {
   min-height: 1.35em;
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-secondary);
   line-height: 1.35;
   resize: none;
@@ -354,6 +357,7 @@
   padding: 0 var(--cat-pad);
   box-sizing: border-box;
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   color: var(--color-text-secondary);
   text-align: left;
   -webkit-tap-highlight-color: transparent;
@@ -416,6 +420,7 @@
 .confirmText {
   margin: 0 0 var(--space-md);
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   line-height: 1.45;
   color: var(--color-text-primary);
 }
@@ -432,6 +437,7 @@
   min-width: 72px;
   padding: 0 var(--space-md);
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   border-radius: var(--radius-sm);
 }
 
@@ -465,6 +471,7 @@
   border-radius: 10px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-primary);
   animation: toastIn var(--dur-fast) var(--ease-out) both;
 }
@@ -478,6 +485,7 @@
   min-height: 36px;
   padding: 0 8px;
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   text-decoration: underline;
@@ -506,12 +514,14 @@
      on focus restore 16px so zoom stays prevented while typing. */
   .nameInput {
     font-size: 16px;
+    letter-spacing: var(--tracking-md);
     font-weight: 500;
     line-height: 22px;
   }
 
   .descInput {
     font-size: 16px;
+    letter-spacing: var(--tracking-md);
     line-height: 1.35;
     color: var(--color-text-secondary);
     transform: scale(0.875);
