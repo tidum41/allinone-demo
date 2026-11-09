@@ -42,7 +42,7 @@ export function makeBulletLine(content = '') {
 
 // Single contenteditable line — plain text, bullet, or checklist item
 const BlobLine = forwardRef(function BlobLine(
-  { line, isFirst, isSelected, onChange, onKeyDown, onToggleCheck, onFocus },
+  { line, isFirst, index = 0, isSelected, onChange, onKeyDown, onToggleCheck, onFocus },
   fwdRef
 ) {
   const innerRef = useRef(null)
@@ -80,7 +80,11 @@ const BlobLine = forwardRef(function BlobLine(
   }, [onChange])
 
   return (
-    <div className={`${styles.line} ${isSelected ? styles.lineSelected : ''}`}>
+    <div
+      className={`${styles.line} ${isSelected ? styles.lineSelected : ''}`}
+      data-aio-enter="row"
+      style={{ '--aio-i': Math.min(index, 12) }}
+    >
       {line.type === 'check' && (
         <button
           className={`${styles.square} ${line.checked ? styles.squareChecked : ''}`}
@@ -461,6 +465,7 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
           }}
           line={line}
           isFirst={idx === 0}
+          index={idx}
           isSelected={idx >= selLo && idx <= selHi}
           onChange={(content) => handleChange(idx, content)}
           onKeyDown={(e) => handleKeyDown(idx, e)}

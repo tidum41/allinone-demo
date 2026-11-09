@@ -66,6 +66,46 @@ export default function App() {
     }
   }, [tasksLoaded]) // eslint-disable-line
 
+  // Staggered entrance. When embedded (portfolio modal), wait for the parent's
+  // "allinone-enter" message after it hides its loader; standalone, start almost
+  // immediately. prefers-reduced-motion skips straight to the final state.
+  useEffect(() => {
+    const root = document.documentElement
+    if (root.getAttribute('data-aio-entrance') === 'done') return
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let finished = false
+    let timer = 0
+    const finish = () => {
+      if (finished) return
+      finished = true
+      window.clearTimeout(timer)
+      window.removeEventListener('message', onMessage)
+      root.setAttribute('data-aio-entrance', 'done')
+    }
+    const start = () => {
+      if (finished) return
+      if (reduced) { finish(); return }
+      root.setAttribute('data-aio-entrance', 'running')
+      window.setTimeout(finish, 720)
+    }
+    const onMessage = (e) => {
+      if (e.source !== window.parent) return
+      const d = e.data
+      if (d === 'allinone-enter' || (d && typeof d === 'object' && d.type === 'allinone-enter')) start()
+    }
+    root.setAttribute('data-aio-entrance', 'pending')
+    window.addEventListener('message', onMessage)
+    const ready = () => {
+      try { window.parent.postMessage({ type: 'allinone-ready' }, window.location.origin) } catch { /* cross-origin */ }
+      timer = window.setTimeout(start, window.parent === window ? 40 : 2200)
+    }
+    requestAnimationFrame(() => requestAnimationFrame(ready))
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('message', onMessage)
+    }
+  }, [])
+
   const toggleSidebar = useCallback(() => setSidebarOpen(v => !v), [])
   const closeSidebar = useCallback(() => setSidebarOpen(false), [])
 
@@ -422,7 +462,7 @@ export default function App() {
         />
       ) : (
         <div className="workspace">
-          <div className={`toolbarStrip${categoriesOpen ? ' toolbarStripCatOpen' : ''}`}>
+          <div className={`toolbarStrip${categoriesOpen ? ' toolbarStripCatOpen' : ''}`} data-aio-enter="toolbar">
             <div className="toolbarMain">
               <div className="app">
                 <MenuBar

@@ -187,7 +187,11 @@ export function TaskItem({ task, index = 0, onComplete, onPriorityChange, onText
         isBeingDragged ? styles.dragging : '',
         isSelected ? styles.selected : '',
       ].join(' ')}
-      style={effectiveCompleting ? undefined : { animationDelay: `${index * 28}ms` }}
+      data-aio-enter="row"
+      style={{
+        '--aio-i': Math.min(index ?? 0, 12),
+        ...(effectiveCompleting ? {} : { animationDelay: `${index * 28}ms` }),
+      }}
       onClick={handleRowClick}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
