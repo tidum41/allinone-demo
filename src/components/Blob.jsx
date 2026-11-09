@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, forwardRef, useCallback, useImperativeHandle } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, forwardRef, useCallback, useImperativeHandle } from 'react'
 import styles from './Blob.module.css'
 
 // Walk up the DOM to find the nearest contenteditable ancestor (or self)
@@ -9,6 +9,49 @@ function getContentEditable(node) {
     n = n.parentElement
   }
   return null
+}
+
+function cleanLineHtml(html) {
+  if (!html || html === '<br>' || html === '<br/>' || html === '<br />') return ''
+  return html
+}
+
+// Split a contenteditable's HTML at the current selection into before / after
+function getHtmlPartsAtCaret(el) {
+  try {
+    const sel = window.getSelection()
+    if (!sel?.rangeCount) {
+      const html = cleanLineHtml(el.innerHTML)
+      return { before: html, after: '' }
+    }
+    const range = sel.getRangeAt(0)
+
+    const beforeRange = document.createRange()
+    beforeRange.selectNodeContents(el)
+    beforeRange.setEnd(range.startContainer, range.startOffset)
+    const beforeDiv = document.createElement('div')
+    beforeDiv.appendChild(beforeRange.cloneContents())
+
+    const afterRange = document.createRange()
+    afterRange.selectNodeContents(el)
+    afterRange.setStart(range.endContainer, range.endOffset)
+    const afterDiv = document.createElement('div')
+    afterDiv.appendChild(afterRange.cloneContents())
+
+    return {
+      before: cleanLineHtml(beforeDiv.innerHTML),
+      after: cleanLineHtml(afterDiv.innerHTML),
+    }
+  } catch {
+    const html = cleanLineHtml(el.innerHTML)
+    return { before: html, after: '' }
+  }
+}
+
+function makeLineOfType(type, content = '') {
+  if (type === 'check') return makeCheckLine(content)
+  if (type === 'bullet') return makeBulletLine(content)
+  return makeTextLine(content)
 }
 
 // Returns true if the cursor (collapsed selection) is at the very start of el
@@ -42,7 +85,7 @@ export function makeBulletLine(content = '') {
 
 // Single contenteditable line — plain text, bullet, or checklist item
 const BlobLine = forwardRef(function BlobLine(
-  { line, isFirst, index = 0, isSelected, onChange, onKeyDown, onToggleCheck, onFocus },
+  { line, isFirst, index = 0, isSelected, onChange, onKeyDown, onBeforeInput, onPaste, onToggleCheck, onFocus },
   fwdRef
 ) {
   const innerRef = useRef(null)
@@ -106,6 +149,8 @@ const BlobLine = forwardRef(function BlobLine(
         className={`${styles.lineInput} ${line.type === 'check' && line.checked ? styles.strikethrough : ''}`}
         onInput={handleInput}
         onKeyDown={onKeyDown}
+        onBeforeInput={onBeforeInput}
+        onPaste={onPaste}
         onFocus={onFocus}
         onBlur={(e) => {
           const sel = window.getSelection()
@@ -124,8 +169,28 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
   const [lineSel, setLineSel] = useState(null)    // { anchor, focus } | null
   const dragAnchorRef = useRef(null)              // { idx, active }
   const skipNextFocusClearRef = useRef(false)     // suppress focus-based clear during Shift+Arrow
+  const suppressBeforeInputBreakRef = useRef(false) // keydown Enter already created the line
+  const pendingFocusRef = useRef(null)            // { idx, collapse: 'start'|'end' } after line insert
 
   const clearLineSel = useCallback(() => setLineSel(null), [])
+
+  // Focus a line after React commits the new DOM node (setTimeout(0) races fast typing)
+  useLayoutEffect(() => {
+    const pending = pendingFocusRef.current
+    if (!pending) return
+    const el = inputRefs.current[pending.idx]
+    if (!el) return
+    pendingFocusRef.current = null
+    el.focus()
+    try {
+      const s = window.getSelection()
+      const r = document.createRange()
+      r.selectNodeContents(el)
+      r.collapse(pending.collapse !== 'end')
+      s.removeAllRanges()
+      s.addRange(r)
+    } catch {}
+  }, [lines])
 
   // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -186,6 +251,22 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
 
   const handleChange = useCallback((idx, content) => {
     onChange(lines.map((l, i) => i === idx ? { ...l, content } : l))
+  }, [lines, onChange])
+
+  // Shared Enter / beforeinput path: split at caret into a real new line object
+  const insertLineBreakAt = useCallback((idx, el) => {
+    const cur = lines[idx]
+    if (!cur) return
+    const isEmpty = !el?.textContent?.trim()
+    if ((cur.type === 'check' || cur.type === 'bullet') && isEmpty && idx === lines.length - 1) {
+      onChange(lines.map((l, i) => i === idx ? { ...l, type: 'text' } : l))
+      return
+    }
+    const { before, after } = getHtmlPartsAtCaret(el)
+    const updatedCurrent = { ...cur, content: before }
+    const newLine = makeLineOfType(cur.type, after)
+    pendingFocusRef.current = { idx: idx + 1, collapse: 'start' }
+    onChange([...lines.slice(0, idx), updatedCurrent, newLine, ...lines.slice(idx + 1)])
   }, [lines, onChange])
 
   const handleKeyDown = useCallback((idx, e) => {
@@ -327,19 +408,73 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
 
     if (e.key === 'Enter') {
       e.preventDefault()
-      const cur = lines[idx]
-      const isEmpty = !e.currentTarget.textContent?.trim()
-      if ((cur.type === 'check' || cur.type === 'bullet') && isEmpty && idx === lines.length - 1) {
-        onChange(lines.map((l, i) => i === idx ? { ...l, type: 'text' } : l))
+      // Mark so a following beforeinput (insertParagraph) does not create a second line
+      suppressBeforeInputBreakRef.current = true
+      insertLineBreakAt(idx, e.currentTarget)
+    }
+  }, [lines, onChange, lineSel, clearLineSel, onBeforeLineDelete, insertLineBreakAt])
+
+  // Safari iOS (and some Chromium paths) insert <div>/<br> via beforeinput even
+  // when keydown Enter is prevented — block that and create a real line instead.
+  const handleBeforeInput = useCallback((idx, e) => {
+    const type = e.inputType
+    if (type === 'insertParagraph' || type === 'insertLineBreak') {
+      e.preventDefault()
+      if (suppressBeforeInputBreakRef.current) {
+        suppressBeforeInputBreakRef.current = false
         return
       }
-      const newLine = cur.type === 'check'  ? makeCheckLine()
-                    : cur.type === 'bullet' ? makeBulletLine()
-                    : makeTextLine()
-      onChange([...lines.slice(0, idx + 1), newLine, ...lines.slice(idx + 1)])
-      setTimeout(() => inputRefs.current[idx + 1]?.focus(), 0)
+      insertLineBreakAt(idx, e.currentTarget)
     }
-  }, [lines, onChange, lineSel, clearLineSel])
+  }, [insertLineBreakAt])
+
+  // Paste plain text only; keep newlines by splitting into separate line objects
+  const handlePaste = useCallback((idx, e) => {
+    e.preventDefault()
+    const raw = e.clipboardData?.getData('text/plain') ?? ''
+    // Normalize Windows/Mac newlines; drop trailing blank from final \n
+    const pastedLines = raw.replace(/\r\n?/g, '\n').split('\n')
+    if (pastedLines.length === 0) return
+
+    const cur = lines[idx]
+    if (!cur) return
+    const { before, after } = getHtmlPartsAtCaret(e.currentTarget)
+
+    // Escape plain text for HTML storage (formatting is intentionally stripped)
+    const escape = (t) => t
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+
+    const first = escape(pastedLines[0])
+    const lastIdx = pastedLines.length - 1
+    const middle = pastedLines.slice(1, lastIdx).map(escape)
+    const last = escape(pastedLines[lastIdx])
+
+    let next
+    if (pastedLines.length === 1) {
+      next = lines.map((l, i) =>
+        i === idx ? { ...l, content: before + first + after } : l
+      )
+    } else {
+      const head = { ...cur, content: before + first }
+      const midLines = middle.map((content) => makeLineOfType(cur.type, content))
+      const tail = makeLineOfType(cur.type, last + after)
+      next = [
+        ...lines.slice(0, idx),
+        head,
+        ...midLines,
+        tail,
+        ...lines.slice(idx + 1),
+      ]
+    }
+
+    pendingFocusRef.current = {
+      idx: idx + pastedLines.length - 1,
+      collapse: 'end',
+    }
+    onChange(next)
+  }, [lines, onChange])
 
   const handleToggleCheck = useCallback((idx) => {
     onChange(lines.map((l, i) => i === idx ? { ...l, checked: !l.checked } : l))
@@ -469,6 +604,8 @@ export const Blob = forwardRef(function Blob({ lines, onChange, onBeforeLineDele
           isSelected={idx >= selLo && idx <= selHi}
           onChange={(content) => handleChange(idx, content)}
           onKeyDown={(e) => handleKeyDown(idx, e)}
+          onBeforeInput={(e) => handleBeforeInput(idx, e)}
+          onPaste={(e) => handlePaste(idx, e)}
           onToggleCheck={() => handleToggleCheck(idx)}
           onFocus={() => {
             focusedIdx.current = idx

@@ -2,22 +2,11 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { db } from '../lib/firebase'
 import { ref, get, set, push, onValue, off } from 'firebase/database'
 import { makeTextLine } from '../components/Blob'
+import { htmlToTaskLines } from '../lib/htmlToPlainText'
 
 
 
 const DEFAULT_LINES = [makeTextLine('')]
-
-// Strip HTML tags so Claude receives plain text
-function stripHtml(html) {
-  if (!html) return ''
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
-    .trim()
-}
 
 function parseLinesJson(raw) {
   try {
@@ -173,7 +162,7 @@ export function useFirebase() {
     })
   }, [])
 
-  const blobText = lines.map(l => stripHtml(l.content)).filter(Boolean).join('\n')
+  const blobText = lines.flatMap(l => htmlToTaskLines(l.content)).join('\n')
 
   const saveRule = useCallback((taskText, correctedCategory) => {
     const rule = { taskText, correctedCategory, dateAdded: new Date().toISOString() }

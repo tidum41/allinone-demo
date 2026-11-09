@@ -8,7 +8,8 @@
     "dev:api": "node dev-api.js",
     "dev:full": "node dev-api.js & vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test src/lib/htmlToPlainText.test.js"
   },
   "dependencies": {
     "agentation": "^3.0.2",

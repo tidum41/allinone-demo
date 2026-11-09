@@ -11,14 +11,10 @@ import { SummaryPanel } from './components/SummaryPanel'
 import { NoteEditor } from './components/NoteEditor'
 import { CategoriesPanel } from './components/CategoriesPanel'
 import { CategoriesGuide } from './components/CategoriesGuide'
+import { htmlToPlainText } from './lib/htmlToPlainText'
 
 const VIEW_MAIN = 'main'
 const VIEW_NOTE_EDITOR = 'noteEditor'
-
-function stripHtml(html) {
-  if (!html) return ''
-  return html.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').trim()
-}
 
 export default function App() {
   const {
@@ -346,7 +342,7 @@ export default function App() {
     if (archive) {
       try {
         const existing = JSON.parse(archive.body || '[]')
-        const filtered = existing.filter(l => !stripHtml(l.content || '').startsWith(task.text))
+        const filtered = existing.filter(l => !htmlToPlainText(l.content || '').startsWith(task.text))
         if (filtered.length !== existing.length) {
           if (filtered.length === 0) {
             deleteNote(archive.id)  // don't leave behind an empty "[]" body
