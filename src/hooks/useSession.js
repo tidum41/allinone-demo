@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { makeTextLine, makeCheckLine, makeBulletLine } from '../components/Blob'
 import { DEFAULT_CATEGORIES, normalizeCategories } from '../lib/categories'
+import { htmlToTaskLines } from '../lib/htmlToPlainText'
 
 // Pulled from my real to-do list
 const DEMO_LINES = [
@@ -61,17 +62,6 @@ function ssSet(key, value) {
   try { sessionStorage.setItem(key, JSON.stringify(value)) } catch {}
 }
 
-function stripHtml(html) {
-  if (!html) return ''
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
-    .trim()
-}
-
 export function useSession() {
   const [lines, setLines] = useState(() => ssGet('demo:v11:lines', DEMO_LINES))
   const [categoryRules, setCategoryRules] = useState(() => ssGet('demo:v11:rules', []))
@@ -83,7 +73,11 @@ export function useSession() {
   const [savedCompleted, setSavedCompleted] = useState(() => ssGet('demo:v11:completed', []))
   const [prevSortedTasks, setPrevSortedTasks] = useState(() => ssGet('demo:v11:prevTasks', []))
 
-  const blobText = lines.filter(l => l.type === 'check').map(l => stripHtml(l.content)).filter(Boolean).join('\n')
+  // Convert div/br inside each contenteditable line to real newlines before parsing tasks
+  const blobText = lines
+    .filter(l => l.type === 'check')
+    .flatMap(l => htmlToTaskLines(l.content))
+    .join('\n')
 
   const updateLines = useCallback((newLines) => {
     setLines(newLines)
