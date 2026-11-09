@@ -47,6 +47,7 @@
   background: transparent;
   font-family: var(--font-family);
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   line-height: 1.65;
   color: var(--color-text-primary);
   caret-color: var(--color-text-primary);
@@ -71,6 +72,7 @@
 
 .bullet {
   font-size: 17px;
+  letter-spacing: var(--tracking-lg);
   line-height: 1;
   color: var(--color-text-secondary);
   flex-shrink: 0;

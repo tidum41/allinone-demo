@@ -43,12 +43,13 @@
   font-size: var(--font-size-lg);
   font-weight: 590;
   color: var(--color-text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-lg);
 }
 
 /* Done: same tap size as other icon buttons, right-aligned */
 .close {
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
   min-height: 44px;
@@ -75,7 +76,7 @@
   font-size: var(--font-size-sm);
   font-weight: 650;
   color: var(--color-text-secondary);
-  letter-spacing: 0.01em;
+  letter-spacing: var(--tracking-sm);
   margin-bottom: var(--space-xs);
   padding-bottom: var(--space-xs);
   border-bottom: 1px solid var(--color-border);
@@ -92,6 +93,7 @@
 /* Category label — same size as section meta text, not 11px */
 .cat {
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-placeholder);
   white-space: nowrap;
   flex-shrink: 0;
@@ -101,6 +103,7 @@
 /* Task text — matches TaskItem body text exactly */
 .text {
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   line-height: 1.45;
   color: var(--color-text-primary);
   flex: 1;
@@ -108,6 +111,7 @@
 
 .empty {
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-placeholder);
   padding: 4px 0;
 }

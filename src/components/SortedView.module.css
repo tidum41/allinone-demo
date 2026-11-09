@@ -12,6 +12,7 @@
 .empty {
   padding: var(--space-lg) var(--space-md);
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-placeholder);
 }
 
@@ -20,5 +21,5 @@
   padding: var(--space-sm) var(--space-md) var(--space-xl);
   font-size: var(--font-size-xs, 11px);
   color: var(--color-text-placeholder);
-  letter-spacing: 0.01em;
+  letter-spacing: var(--tracking-xs);
 }

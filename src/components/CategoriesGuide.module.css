@@ -2,6 +2,7 @@
   margin: var(--space-sm) 0 0;
   padding: 0 var(--space-md);
   font-size: 13px;
+  letter-spacing: var(--tracking-sm);
   line-height: 1.45;
   color: var(--color-text-secondary);
   cursor: default;
@@ -15,6 +16,7 @@
   background: none;
   font: inherit;
   font-size: 13px;
+  letter-spacing: var(--tracking-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   text-decoration: underline;

@@ -49,6 +49,15 @@
   --font-size-md: 15px;
   --font-size-lg: 17px;
   --font-size-xl: 22px;
+  /* Tracking — paired 1:1 with the sizes above. Tight only for display (28px+),
+     neutral for body, slightly open for small UI text, open for all-caps. */
+  --tracking-xs: 0.015em;   /* 11px badges, chips, counts */
+  --tracking-sm: 0.015em;   /* 13px buttons (Sort), labels */
+  --tracking-md: 0;         /* 15px body */
+  --tracking-lg: 0;         /* 17px emphasised body */
+  --tracking-xl: -0.005em;  /* 22px section titles */
+  --tracking-display: -0.015em; /* 28px+ display */
+  --tracking-caps: 0.06em;  /* any text-transform: uppercase */
   --font-weight-regular: 400;
   --font-weight-medium: 500;
 

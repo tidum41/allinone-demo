@@ -21,7 +21,7 @@
   font-size: var(--font-size-sm);
   font-weight: 650;
   color: var(--color-text-secondary);
-  letter-spacing: 0.01em;
+  letter-spacing: var(--tracking-sm);
   flex: 1;
 }
 
@@ -120,6 +120,7 @@
 .text {
   flex: 1;
   font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-md);
   line-height: 1.5;
   color: var(--color-text-placeholder);
   text-decoration: line-through;
@@ -128,6 +129,7 @@
 
 .date {
   font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-sm);
   color: var(--color-text-secondary);
   flex-shrink: 0;
   white-space: nowrap;
